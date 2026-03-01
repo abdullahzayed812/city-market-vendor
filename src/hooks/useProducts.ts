@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSocket } from '../app/SocketContext';
 import { ProductService } from '../services/api/productService';
@@ -11,9 +11,23 @@ export const useProducts = () => {
   const { vendor } = useAuth();
   const vendorId = vendor?.id;
 
-  const { data: products, isLoading, error } = useQuery({
+  const {
+    data: productsData,
+    isLoading: productsLoading,
+    error: productsError,
+  } = useQuery({
     queryKey: ['vendorProducts', vendorId],
     queryFn: () => ProductService.getVendorProducts(vendorId!),
+    enabled: !!vendorId,
+  });
+
+  const {
+    data: categoriesData,
+    isLoading: categoriesLoading,
+    error: categoriesError,
+  } = useQuery({
+    queryKey: ['vendorCategories', vendorId],
+    queryFn: () => ProductService.getVendorCategories(vendorId!),
     enabled: !!vendorId,
   });
 
@@ -34,5 +48,11 @@ export const useProducts = () => {
     };
   }, [socket, vendorId, queryClient]);
 
-  return { products, isLoading, error };
+  const products = useMemo(() => productsData?.data || [], [productsData]);
+  const categories = useMemo(() => categoriesData || [], [categoriesData]);
+
+  const isLoading = productsLoading || categoriesLoading;
+  const error = productsError || categoriesError;
+
+  return { products, categories, isLoading, error };
 };

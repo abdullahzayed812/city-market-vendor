@@ -80,7 +80,6 @@ const OrderDetailsScreen = ({ route }: any) => {
         proposedQuantity: p.quantity,
       }),
     );
-    // console.log(proposals);
     proposeChanges(proposals, {
       onSuccess: () => setLocalProposals({}),
     });
@@ -169,7 +168,9 @@ const OrderDetailsScreen = ({ route }: any) => {
                 {proposal && (
                   <View style={styles.proposalBadge}>
                     <AlertCircle size={14} color={theme.colors.warning} />
-                    <Text style={styles.proposalText}>{t('orders.proposed')}</Text>
+                    <Text style={styles.proposalText}>
+                      {t('orders.proposed')}
+                    </Text>
                   </View>
                 )}
               </View>

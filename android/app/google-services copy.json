@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "63927254792",
+    "project_id": "citymarket-acaf9",
+    "storage_bucket": "citymarket-acaf9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:63927254792:android:2b48dbbe92f4ea1b22f6bd",
+        "android_client_info": {
+          "package_name": "com.courier"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyArNaY9vW9jtjt2JL0krmzHqB4CsGogpZM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:63927254792:android:fe3505337bc38c4322f6bd",
+        "android_client_info": {
+          "package_name": "com.customer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyArNaY9vW9jtjt2JL0krmzHqB4CsGogpZM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:63927254792:android:0f84a96cf5756dc522f6bd",
+        "android_client_info": {
+          "package_name": "com.vendor"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyArNaY9vW9jtjt2JL0krmzHqB4CsGogpZM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

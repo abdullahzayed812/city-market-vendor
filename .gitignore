@@ -35,6 +35,14 @@ local.properties
 !debug.keystore
 .kotlin/
 
+# Google services
+#
+google-services.json
+GoogleService-Info.plist
+*.p12
+*.pem
+
+
 # node.js
 #
 node_modules/

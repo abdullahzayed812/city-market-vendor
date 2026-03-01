@@ -8,6 +8,8 @@ import { I18nManager } from 'react-native';
 import './src/locales/i18n';
 import i18n from './src/locales/i18n';
 import Toast from 'react-native-toast-message';
+import { AppType } from '@city-market/shared';
+import { useNotifications } from './src/hooks/useNotifications';
 
 // Force RTL if current language is Arabic
 const isArabic = i18n.language === 'ar';
@@ -16,13 +18,18 @@ if (isArabic && !I18nManager.isRTL) {
   I18nManager.forceRTL(true);
 }
 
+const AppContent = () => {
+  useNotifications(AppType.VENDOR);
+  return <RootNavigator />;
+};
+
 const App = () => {
   return (
     <SafeAreaProvider>
       <AuthProvider>
         <APIProvider>
           <SocketProvider>
-            <RootNavigator />
+            <AppContent />
             <Toast />
           </SocketProvider>
         </APIProvider>

@@ -1,41 +1,124 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Image, StatusBar } from 'react-native';
+import React, { useMemo, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  SectionList,
+  ActivityIndicator,
+  TouchableOpacity,
+  StatusBar,
+  Dimensions,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Plus, Package, MoreVertical, Layers } from 'lucide-react-native';
+import { Package, MoreVertical, Plus } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useProducts } from '../hooks/useProducts';
 import { theme } from '../theme';
 import CustomHeader from '../components/common/CustomHeader';
+import { getBaseURL } from '../services/api/config';
+import ImageWithPlaceholder from '../components/common/ImageWithPlaceholder';
 
-const ProductsScreen = () => {
-  const { t } = useTranslation();
-  const { products, isLoading } = useProducts();
+const { width } = Dimensions.get('window');
+const CARD_WIDTH = (width - theme.spacing.lg * 2 - theme.spacing.md) / 2;
 
-  const renderProductItem = ({ item }: any) => (
-    <View style={styles.productCard}>
-      <View style={styles.productImageContainer}>
-        {item.imageUrl ? (
-          <Image source={{ uri: item.imageUrl }} style={styles.image} />
-        ) : (
-          <Package size={28} color={theme.colors.textLight} />
-        )}
+// Separate Product Card Component for better performance
+const ProductCard = React.memo(({ item, onEdit }: any) => (
+  <View style={styles.productCardWrapper}>
+    <TouchableOpacity
+      style={styles.productCard}
+      onPress={() => onEdit(item)}
+      activeOpacity={0.9}
+    >
+      <View style={styles.imageWrapper}>
+        <ImageWithPlaceholder
+          uri={item.imageUrl ? `${getBaseURL()}${item.imageUrl}` : null}
+          style={styles.productImage}
+        />
+        <TouchableOpacity style={styles.moreBtn}>
+          <MoreVertical size={16} color={theme.colors.white} />
+        </TouchableOpacity>
       </View>
+
       <View style={styles.productInfo}>
-        <View style={styles.productHeader}>
-          <Text style={styles.productName} numberOfLines={1}>{item.name}</Text>
-          <TouchableOpacity style={styles.moreBtn}>
-            <MoreVertical size={18} color={theme.colors.textLight} />
-          </TouchableOpacity>
-        </View>
-        <Text style={styles.productPrice}>${item.price.toFixed(2)}</Text>
-        <View style={styles.productFooter}>
-          <View style={styles.stockBadge}>
-            <Layers size={12} color={theme.colors.primary} />
-            <Text style={styles.stockText}>{t('products.stock')}: {item.stockQuantity}</Text>
+        <Text style={styles.productName} numberOfLines={1}>
+          {item.name}
+        </Text>
+        <View style={styles.priceRow}>
+          <Text style={styles.productPrice}>${item.price.toFixed(2)}</Text>
+          <View
+            style={[
+              styles.stockBadge,
+              {
+                backgroundColor:
+                  item.stockQuantity < 10
+                    ? 'rgba(255, 59, 48, 0.1)'
+                    : 'rgba(79, 82, 64, 0.05)',
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.stockText,
+                {
+                  color:
+                    item.stockQuantity < 10
+                      ? theme.colors.error
+                      : theme.colors.primary,
+                },
+              ]}
+            >
+              {item.stockQuantity}
+            </Text>
           </View>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
+  </View>
+));
+
+const ProductsScreen = () => {
+  const { t } = useTranslation();
+  const { products, categories, isLoading } = useProducts();
+
+  // Chunk products into pairs for grid layout
+  const sections = useMemo(() => {
+    if (!products || !categories) return [];
+
+    return categories
+      .map(cat => {
+        const catProducts = products.filter(p => p.vendorCategoryId === cat.id);
+        const chunkedProducts = [];
+        for (let i = 0; i < catProducts.length; i += 2) {
+          chunkedProducts.push(catProducts.slice(i, i + 2));
+        }
+        return {
+          title: cat.name,
+          id: cat.id,
+          data: chunkedProducts,
+        };
+      })
+      .filter(section => section.data.length > 0);
+  }, [products, categories]);
+
+  const handleEditProduct = useCallback((product: any) => {
+    // Navigate to edit product or open actions menu
+    console.log('Edit product:', product.name);
+  }, []);
+
+  const renderRow = useCallback(
+    ({ item }: { item: any[] }) => (
+      <View style={styles.row}>
+        {item.map(product => (
+          <ProductCard
+            key={product.id}
+            item={product}
+            onEdit={handleEditProduct}
+          />
+        ))}
+        {item.length === 1 && <View style={styles.productCardWrapper} />}
+      </View>
+    ),
+    [handleEditProduct],
   );
 
   if (isLoading) {
@@ -49,12 +132,26 @@ const ProductsScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      <CustomHeader title={t('products.title')} />
-      <FlatList
-        data={products}
-        renderItem={renderProductItem}
-        keyExtractor={item => item.id}
+      <CustomHeader
+        title={t('products.title')}
+        rightComponent={
+          <TouchableOpacity style={styles.headerAddBtn}>
+            <Plus size={24} color={theme.colors.primary} />
+          </TouchableOpacity>
+        }
+      />
+
+      <SectionList
+        sections={sections}
+        keyExtractor={(item, index) => item[0].id + index}
+        renderItem={renderRow}
+        renderSectionHeader={({ section: { title } }) => (
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{title}</Text>
+          </View>
+        )}
         contentContainerStyle={styles.listContent}
+        stickySectionHeadersEnabled={true}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -63,9 +160,6 @@ const ProductsScreen = () => {
           </View>
         }
       />
-      <TouchableOpacity style={styles.fab} activeOpacity={0.9}>
-        <Plus color={theme.colors.white} size={28} />
-      </TouchableOpacity>
     </SafeAreaView>
   );
 };
@@ -73,53 +167,92 @@ const ProductsScreen = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  listContent: { padding: theme.spacing.lg },
+  headerAddBtn: {
+    padding: 8,
+  },
+  listContent: {
+    paddingBottom: 40,
+  },
+  sectionHeader: {
+    backgroundColor: theme.colors.background,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: theme.colors.primary,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginBottom: theme.spacing.md,
+  },
+  productCardWrapper: {
+    width: CARD_WIDTH,
+  },
   productCard: {
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl,
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    ...theme.shadows.card,
-  },
-  productImageContainer: {
-    width: 76,
-    height: 76,
-    borderRadius: 18,
-    backgroundColor: theme.colors.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginEnd: 16,
+    borderRadius: 20,
     overflow: 'hidden',
+    ...theme.shadows.card,
+    height: 210,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.03)',
   },
-  image: { width: '100%', height: '100%' },
-  productInfo: { flex: 1 },
-  productHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  productName: { fontSize: 17, fontWeight: theme.typography.weights.bold, color: theme.colors.secondary, flex: 1 },
-  moreBtn: { padding: 4 },
-  productPrice: { fontSize: 15, color: theme.colors.success, fontWeight: theme.typography.weights.bold, marginTop: 4 },
-  productFooter: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
-  stockBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.primaryLight,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
+  imageWrapper: {
+    width: '100%',
+    height: 130,
+    position: 'relative',
+    backgroundColor: 'rgba(0,0,0,0.02)',
   },
-  stockText: { fontSize: 12, color: theme.colors.primary, fontWeight: theme.typography.weights.semibold, marginStart: 6 },
-  fab: {
+  productImage: {
+    width: '100%',
+    height: '100%',
+  },
+  moreBtn: {
     position: 'absolute',
-    right: 20,
-    bottom: 20,
-    width: 64,
-    height: 64,
-    borderRadius: 22,
-    backgroundColor: theme.colors.primary,
+    top: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.25)',
     justifyContent: 'center',
     alignItems: 'center',
-    ...theme.shadows.medium,
+  },
+  productInfo: {
+    padding: 12,
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  productName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: theme.colors.secondary,
+    marginBottom: 4,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  productPrice: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: theme.colors.success,
+  },
+  stockBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  stockText: {
+    fontSize: 11,
+    fontWeight: '700',
   },
   emptyContainer: { alignItems: 'center', marginTop: 100 },
   emptyText: { marginTop: 16, fontSize: 16, color: theme.colors.textMuted },

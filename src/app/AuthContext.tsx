@@ -57,19 +57,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const signIn = async (credentials: any) => {
-    const data = await AuthService.login(credentials);
+  const signIn = async (user: any, accessToken: string, refreshToken: string) => {
+    await AsyncStorage.setItem('auth_token', accessToken);
+    await AsyncStorage.setItem('refresh_token', refreshToken);
+    await AsyncStorage.setItem('auth_user', JSON.stringify(user));
 
-    if (data.user?.role !== UserRole.VENDOR) {
-      throw new Error(t('auth.unauthorized_vendor'));
-    }
-
-    await AsyncStorage.setItem('auth_token', data.accessToken);
-    await AsyncStorage.setItem('refresh_token', data.refreshToken);
-    await AsyncStorage.setItem('auth_user', JSON.stringify(data.user));
-
-    setToken(data.accessToken);
-    setUser(data.user);
+    setToken(accessToken);
+    setUser(user);
     setIsAuthenticated(true);
 
     try {
