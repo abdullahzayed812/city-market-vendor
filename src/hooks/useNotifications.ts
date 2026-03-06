@@ -103,7 +103,12 @@ export const useNotifications = (appType: AppType) => {
     if (type === 'ORDER_CREATED' || type === 'ORDER_UPDATE') {
       if (navigationRef.isReady()) {
         // For Vendor app, we usually go to Orders tab
-        navigationRef.navigate('Orders' as never);
+        navigationRef.navigate('OrdersTab' as never);
+      }
+    } else if (type === 'NEW_REVIEW') {
+      if (navigationRef.isReady()) {
+        // Navigate to ProfileTab then Reviews screen inside it
+        navigationRef.navigate('ProfileTab' as never, { screen: 'Reviews' } as any);
       }
     }
   };

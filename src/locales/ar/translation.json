@@ -87,8 +87,17 @@
     "push_notifications": "تنبيهات الهاتف",
     "security_privacy": "الأمان والخصوصية",
     "rating": "التقييم",
+    "reviews": "التقييمات",
+    "reviews_subtitle": "ما يقوله العملاء عن متجرك",
     "trips": "الرحلات",
     "reliability": "الموثوقية",
     "version": "الإصدار {{version}}"
+  },
+  "reviews": {
+    "title": "تقييمات المتجر",
+    "no_reviews": "لا توجد تقييمات بعد",
+    "customer_rating": "تقييم العملاء",
+    "total_reviews": "إجمالي التقييمات",
+    "average_stars": "متوسط النجوم"
   }
 }

@@ -87,8 +87,17 @@
     "push_notifications": "Push Notifications",
     "security_privacy": "Security & Privacy",
     "rating": "Rating",
+    "reviews": "Reviews",
+    "reviews_subtitle": "What customers say about your store",
     "trips": "Trips",
     "reliability": "Reliability",
     "version": "Version {{version}}"
+  },
+  "reviews": {
+    "title": "Store Reviews",
+    "no_reviews": "No reviews yet",
+    "customer_rating": "Customer Rating",
+    "total_reviews": "Total Reviews",
+    "average_stars": "Average Stars"
   }
 }

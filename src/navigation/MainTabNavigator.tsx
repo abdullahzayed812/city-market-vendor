@@ -13,6 +13,7 @@ import OrdersScreen from '../screens/OrdersScreen';
 import OrderDetailsScreen from '../screens/OrderDetailsScreen';
 import ProductsScreen from '../screens/ProductsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import ReviewsScreen from '../screens/ReviewsScreen';
 import { theme } from '../theme';
 
 const Tab = createBottomTabNavigator();
@@ -22,6 +23,13 @@ const OrdersStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="OrdersList" component={OrdersScreen} />
     <Stack.Screen name="OrderDetails" component={OrderDetailsScreen} />
+  </Stack.Navigator>
+);
+
+const ProfileStack = () => (
+  <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Screen name="ProfileMain" component={ProfileScreen} />
+    <Stack.Screen name="Reviews" component={ReviewsScreen} />
   </Stack.Navigator>
 );
 
@@ -72,7 +80,7 @@ const MainTabNavigator = () => {
       />
       <Tab.Screen
         name="ProfileTab"
-        component={ProfileScreen}
+        component={ProfileStack}
         options={{
           title: t('profile.title'),
           tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
