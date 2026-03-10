@@ -20,8 +20,8 @@ export const OrderService = {
     const response = await apiClient.post<ApiResponse<null>>(`/orders/vendor-orders/${id}/propose`, { proposals });
     return response.data?.data;
   },
-  updateStatus: async (orderId: string, status: VendorOrderStatus) => {
-    const response = await apiClient.patch<ApiResponse<null>>(`/orders/vendor-orders/${orderId}/status`, { status });
+  updateStatus: async (orderId: string, status: VendorOrderStatus, itemWeights?: { itemId: string; actualWeightGrams: number }[]) => {
+    const response = await apiClient.patch<ApiResponse<null>>(`/orders/vendor-orders/${orderId}/status`, { status, itemWeights });
     return response.data?.data;
   },
 };

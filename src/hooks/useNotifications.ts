@@ -2,9 +2,9 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Platform, PermissionsAndroid } from 'react-native';
 import {
   getMessaging,
-  RemoteMessage,
-  onMessage,
-  onTokenRefresh,
+  RemoteMessage, 
+  onMessage, 
+  onTokenRefresh, 
   onNotificationOpenedApp,
   requestPermission,
   getToken as getFcmToken,
@@ -17,7 +17,7 @@ import Toast from 'react-native-toast-message';
 import { AppType, PlatformType } from '@city-market/shared';
 import { navigationRef } from '../navigation/RootNavigator';
 
-// Pass the app type here (e.g., 'CUSTOMER', 'COURIER', 'VENDOR')
+// Pass the app type here (e.g., 'CUSTOMER', 'COURIER')
 export const useNotifications = (appType: AppType) => {
   const { user, isAuthenticated } = useAuth();
   const messaging = useMemo(() => getMessaging(), []);
@@ -28,7 +28,7 @@ export const useNotifications = (appType: AppType) => {
       isRegistered.current = true;
       setupNotifications();
     }
-
+    
     // Reset registration flag if user logs out
     if (!isAuthenticated) {
       isRegistered.current = false;
@@ -98,17 +98,20 @@ export const useNotifications = (appType: AppType) => {
 
   const handleNotificationNavigation = (remoteMessage: RemoteMessage) => {
     console.log('Navigating based on notification:', remoteMessage);
-    const { type } = remoteMessage.data || {};
-
-    if (type === 'ORDER_CREATED' || type === 'ORDER_UPDATE') {
+    const { type, orderId } = (remoteMessage.data || {}) as any;
+    
+    if (type === 'NEW_ORDER' || type === 'ORDER_UPDATE' || type === 'PROPOSAL_DECISION') {
       if (navigationRef.isReady()) {
-        // For Vendor app, we usually go to Orders tab
-        navigationRef.navigate('OrdersTab' as never);
+        (navigationRef.navigate as any)('OrdersTab', {
+          screen: 'OrderDetails',
+          params: { orderId }
+        });
       }
     } else if (type === 'NEW_REVIEW') {
       if (navigationRef.isReady()) {
-        // Navigate to ProfileTab then Reviews screen inside it
-        navigationRef.navigate('ProfileTab' as never, { screen: 'Reviews' } as any);
+        (navigationRef.navigate as any)('ProfileTab', {
+          screen: 'Reviews'
+        });
       }
     }
   };

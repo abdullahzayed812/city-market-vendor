@@ -1,18 +1,17 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { AuthService } from '../services/api/authService';
 import { VendorService } from '../services/api/vendorService';
-import { UserRole } from '@city-market/shared';
-import { useTranslation } from 'react-i18next';
 
 interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   user: any | null;
-  vendor: any | null;
   token: string | null;
-  signIn: (credentials: any) => Promise<void>;
+  vendor: any | null;
+  signIn: (user: any, accessToken: string, refreshToken: string) => Promise<void>;
   signOut: () => Promise<void>;
+  updateVendor: (vendor: any) => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,7 +19,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { t } = useTranslation();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<any | null>(null);
@@ -35,20 +33,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const savedToken = await AsyncStorage.getItem('auth_token');
       const savedUser = await AsyncStorage.getItem('auth_user');
+      const savedVendor = await AsyncStorage.getItem('auth_vendor');
 
       if (savedToken && savedUser) {
-        const userData = JSON.parse(savedUser);
         setToken(savedToken);
-        setUser(userData);
-        setIsAuthenticated(true);
-
-        // Fetch vendor profile to ensure we have it
-        try {
-          const profile = await VendorService.getProfile();
-          setVendor(profile);
-        } catch (error) {
-          console.error('Failed to fetch vendor profile on init:', error);
+        setUser(JSON.parse(savedUser));
+        
+        if (savedVendor) {
+          setVendor(JSON.parse(savedVendor));
+        } else {
+          // If token exists but vendor profile doesn't, try to fetch it
+          try {
+            const profile = await VendorService.getProfile();
+            if (profile) {
+              await updateVendor(profile);
+            }
+          } catch (e) {
+            console.error('Failed to fetch profile in checkAuth:', e);
+          }
         }
+        
+        setIsAuthenticated(true);
       }
     } catch (e) {
       console.error('Initial auth check failed:', e);
@@ -57,20 +62,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const signIn = async (user: any, accessToken: string, refreshToken: string) => {
-    await AsyncStorage.setItem('auth_token', accessToken);
-    await AsyncStorage.setItem('refresh_token', refreshToken);
-    await AsyncStorage.setItem('auth_user', JSON.stringify(user));
+  const signIn = async (userData: any, accessToken: string, refreshToken: string) => {
+    try {
+      await AsyncStorage.setItem('auth_token', accessToken);
+      await AsyncStorage.setItem('refresh_token', refreshToken);
+      await AsyncStorage.setItem('auth_user', JSON.stringify(userData));
 
-    setToken(accessToken);
-    setUser(user);
-    setIsAuthenticated(true);
+      setToken(accessToken);
+      setUser(userData);
+      setIsAuthenticated(true);
 
+      // Fetch vendor profile immediately after sign in
+      try {
+        const profile = await VendorService.getProfile();
+        if (profile) {
+          await updateVendor(profile);
+        }
+      } catch (e) {
+        console.error('Failed to fetch profile after sign in:', e);
+      }
+    } catch (e) {
+      console.error('SignIn failed:', e);
+      throw e;
+    }
+  };
+
+  const updateVendor = async (vendorData: any) => {
+    await AsyncStorage.setItem('auth_vendor', JSON.stringify(vendorData));
+    setVendor(vendorData);
+  };
+
+  const refreshProfile = async () => {
     try {
       const profile = await VendorService.getProfile();
-      setVendor(profile);
-    } catch (error) {
-      console.error('Failed to fetch vendor profile after login:', error);
+      if (profile) {
+        await updateVendor(profile);
+      }
+    } catch (e) {
+      console.error('Refresh profile failed:', e);
+      throw e;
     }
   };
 
@@ -79,6 +109,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       'auth_token',
       'refresh_token',
       'auth_user',
+      'auth_vendor',
     ]);
     setToken(null);
     setUser(null);
@@ -92,10 +123,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         isAuthenticated,
         isLoading,
         user,
-        vendor,
         token,
+        vendor,
         signIn,
         signOut,
+        updateVendor,
+        refreshProfile,
       }}
     >
       {children}

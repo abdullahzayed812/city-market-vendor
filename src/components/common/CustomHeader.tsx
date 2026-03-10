@@ -8,9 +8,10 @@ import { theme } from '../../theme';
 interface CustomHeaderProps {
   title: string;
   showBack?: boolean;
+  rightComponent?: React.ReactNode;
 }
 
-const CustomHeader: React.FC<CustomHeaderProps> = ({ title, showBack }) => {
+const CustomHeader: React.FC<CustomHeaderProps> = ({ title, showBack, rightComponent }) => {
   const { i18n } = useTranslation();
   const navigation = useNavigation();
   // const isRTL = i18n.language === 'ar';
@@ -34,7 +35,9 @@ const CustomHeader: React.FC<CustomHeaderProps> = ({ title, showBack }) => {
       <Text style={styles.title} numberOfLines={1}>
         {title}
       </Text>
-      <View style={styles.rightContainer} />
+      <View style={styles.rightContainer}>
+          {rightComponent}
+      </View>
     </View>
   );
 };
@@ -57,7 +60,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   rightContainer: {
-    width: 40,
+    minWidth: 40,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
   },
   backButton: {
     width: 40,

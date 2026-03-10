@@ -20,4 +20,14 @@ export const ProductService = {
     );
     return response.data?.data;
   },
+  updateStock: async (id: string, stock?: number, weight?: number) => {
+    const payload: any = {};
+    if (stock !== undefined) payload.stock = stock;
+    if (weight !== undefined) payload.weight = weight;
+    const response = await apiClient.patch<ApiResponse<null>>(
+      `/catalog/products/${id}/stock`,
+      payload,
+    );
+    return response.data?.data;
+  },
 };

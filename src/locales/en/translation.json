@@ -27,7 +27,9 @@
     "error_fill_fields": "Please fill all fields",
     "error_login_failed": "Login failed",
     "unauthorized_vendor": "Unauthorized: Only vendors can access this app",
-    "merchant_portal": "Authorized Merchant Portal"
+    "merchant_portal": "Authorized Merchant Portal",
+    "quick_login_title": "Quick Login (Dev Mode)",
+    "quick_login_desc": "Select a seeded vendor"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -61,7 +63,14 @@
     "submit_proposals": "Submit Proposals",
     "proposal_sent": "Proposals submitted successfully",
     "order_accepted": "Order accepted successfully",
-    "order_id": "Order"
+    "order_id": "Order",
+    "no_orders": "No Orders",
+    "weight_adjustment": "Weight Adjustment",
+    "adjust_weight": "Adjust Weight",
+    "send_weight_proposal": "Send Weight Proposal",
+    "weight": "Weight",
+    "status_proposal_sent": "Proposal Sent",
+    "actual_weight": "Actual Weight"
   },
   "products": {
     "title": "Products",
@@ -99,5 +108,43 @@
     "customer_rating": "Customer Rating",
     "total_reviews": "Total Reviews",
     "average_stars": "Average Stars"
+  },
+  "vendors": {
+    "madinaty_supermarket": "Madinaty Supermarket",
+    "al_jazira_supermarket": "Al Jazira Supermarket",
+    "moataz_pharmacy": "Moataz Pharmacy",
+    "el_madina_bakery": "El Madina Bakery",
+    "al_radwa_butcher": "Al Radwa Butcher",
+    "al_hakeem_poultry": "Al Hakeem Poultry",
+    "al_hakeem_fish": "Al Hakeem Fish",
+    "sanaqreh": "Sanaqreh",
+    "ahmed_yehia": "Ahmed Yehia",
+    "sabawi": "Sabawi",
+    "abdullah_butcher": "Abdullah Butcher",
+    "beheiry_poultry": "Beheiry Poultry",
+    "ghanem_fish": "Ghanem Fish",
+    "mutawakkil_fish": "Mutawakkil Fish",
+    "abu_youssef_fish": "Abu Youssef Fish",
+    "bondoqa": "Bondoqa",
+    "ashri": "Ashri",
+    "lozina": "Lozina",
+    "al_baraka_bakery": "Al Baraka Bakery",
+    "abu_omar": "Abu Omar",
+    "rawan": "Rawan",
+    "shady_library": "Shady Library",
+    "awlad_ragab": "Awlad Ragab",
+    "mazaare_al_kheir": "Mazaare Al Kheir"
+  },
+  "inventory": {
+    "update_stock": "Update Stock",
+    "current_stock": "Current Stock",
+    "new_stock": "New Stock",
+    "stock_updated": "Stock updated successfully",
+    "unit": "Unit",
+    "weight": "Weight",
+    "units": {
+      "kg": "kg",
+      "gram": "g"
+    }
   }
 }

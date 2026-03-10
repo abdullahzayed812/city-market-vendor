@@ -28,8 +28,38 @@ const LoginScreen = () => {
   const [loading, setLoading] = useState(false);
   const isRTL = i18n.language === 'ar';
 
-  const handleLogin = async () => {
-    if (!email || !password) {
+  const quickVendors = [
+    { name: t("vendors.madinaty_supermarket"), email: "supermarket1@citymarket.com" },
+    { name: t("vendors.al_jazira_supermarket"), email: "supermarket2@citymarket.com" },
+    { name: t("vendors.moataz_pharmacy"), email: "pharmacy@citymarket.com" },
+    { name: t("vendors.el_madina_bakery"), email: "bakery@citymarket.com" },
+    { name: t("vendors.al_radwa_butcher"), email: "butcher@citymarket.com" },
+    { name: t("vendors.al_hakeem_poultry"), email: "poultry@citymarket.com" },
+    { name: t("vendors.al_hakeem_fish"), email: "fish@citymarket.com" },
+    { name: t("vendors.sanaqreh"), email: "sanaqreh@citymarket.com" },
+    { name: t("vendors.ahmed_yehia"), email: "ahmed_yehia@citymarket.com" },
+    { name: t("vendors.sabawi"), email: "sabawi@citymarket.com" },
+    { name: t("vendors.abdullah_butcher"), email: "abdullah_butcher@citymarket.com" },
+    { name: t("vendors.beheiry_poultry"), email: "beheiry_poultry@citymarket.com" },
+    { name: t("vendors.ghanem_fish"), email: "ghanem_fish@citymarket.com" },
+    { name: t("vendors.mutawakkil_fish"), email: "mutawakkil_fish@citymarket.com" },
+    { name: t("vendors.abu_youssef_fish"), email: "abu_youssef_fish@citymarket.com" },
+    { name: t("vendors.bondoqa"), email: "bondoqa@citymarket.com" },
+    { name: t("vendors.ashri"), email: "ashri@citymarket.com" },
+    { name: t("vendors.lozina"), email: "lozina@citymarket.com" },
+    { name: t("vendors.al_baraka_bakery"), email: "al_baraka_bakery@citymarket.com" },
+    { name: t("vendors.abu_omar"), email: "abu_omar@citymarket.com" },
+    { name: t("vendors.rawan"), email: "rawan@citymarket.com" },
+    { name: t("vendors.shady_library"), email: "shady_library@citymarket.com" },
+    { name: t("vendors.awlad_ragab"), email: "awlad_ragab@citymarket.com" },
+    { name: t("vendors.mazaare_al_kheir"), email: "mazaare_al_kheir@citymarket.com" },
+  ];
+
+  const handleLogin = async (loginEmail?: string, loginPass?: string) => {
+    const finalEmail = loginEmail || email;
+    const finalPass = loginPass || password;
+
+    if (!finalEmail || !finalPass) {
       Toast.show({
         type: 'error',
         text1: t('common.error'),
@@ -40,7 +70,7 @@ const LoginScreen = () => {
 
     setLoading(true);
     try {
-      const data = await AuthService.login({ email, password });
+      const data = await AuthService.login({ email: finalEmail, password: finalPass });
       
       if (data.user?.role !== UserRole.VENDOR) {
         throw new Error(t('auth.unauthorized_vendor'));
@@ -71,6 +101,7 @@ const LoginScreen = () => {
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           <View style={styles.loginCard}>
             <View style={styles.header}>
@@ -82,14 +113,14 @@ const LoginScreen = () => {
             </View>
 
             <View style={styles.form}>
-              <View style={styles.inputLabelContainer}>
+              <View style={[styles.inputLabelContainer, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
                 <Text style={styles.inputLabel}>{t('auth.email')}</Text>
               </View>
-              <View style={styles.inputWrapper}>
+              <View style={[styles.inputWrapper, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                 <Mail
                   size={20}
                   color={theme.colors.textLight}
-                  style={styles.inputIcon}
+                  style={isRTL ? styles.inputIconAr : styles.inputIcon}
                 />
                 <TextInput
                   style={[styles.input, { textAlign: isRTL ? 'right' : 'left' }]}
@@ -102,14 +133,14 @@ const LoginScreen = () => {
                 />
               </View>
 
-              <View style={styles.inputLabelContainer}>
+              <View style={[styles.inputLabelContainer, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
                 <Text style={styles.inputLabel}>{t('auth.password')}</Text>
               </View>
-              <View style={styles.inputWrapper}>
+              <View style={[styles.inputWrapper, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                 <Lock
                   size={20}
                   color={theme.colors.textLight}
-                  style={styles.inputIcon}
+                  style={isRTL ? styles.inputIconAr : styles.inputIcon}
                 />
                 <TextInput
                   style={[styles.input, { textAlign: isRTL ? 'right' : 'left' }]}
@@ -123,7 +154,7 @@ const LoginScreen = () => {
 
               <TouchableOpacity
                 style={styles.loginButton}
-                onPress={handleLogin}
+                onPress={() => handleLogin()}
                 disabled={loading}
               >
                 {loading ? (
@@ -136,10 +167,35 @@ const LoginScreen = () => {
                     <ChevronRight
                       size={20}
                       color={theme.colors.white}
+                      style={{ transform: [{ rotate: isRTL ? '180deg' : '0deg' }] }}
                     />
                   </>
                 )}
               </TouchableOpacity>
+            </View>
+
+            <View style={styles.quickLoginSection}>
+              <View style={styles.quickLoginDivider}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>{t('auth.quick_login_title')}</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              <View style={[styles.quickLoginGrid, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                {quickVendors.map((v) => (
+                  <TouchableOpacity
+                    key={v.email}
+                    style={styles.quickLoginChip}
+                    onPress={() => {
+                      setEmail(v.email);
+                      handleLogin(v.email, 'password123');
+                    }}
+                  >
+                    <Store size={12} color={theme.colors.primary} />
+                    <Text style={[styles.quickLoginChipText, { textAlign: isRTL ? 'right' : 'left' }]} numberOfLines={1}>{v.name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
           </View>
           
@@ -159,71 +215,118 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: '40%',
+    height: '35%',
     backgroundColor: theme.colors.primary,
     borderBottomLeftRadius: 40,
     borderBottomRightRadius: 40,
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
     padding: theme.spacing.lg,
+    paddingBottom: 40,
   },
   loginCard: {
     backgroundColor: theme.colors.surface,
     borderRadius: 32,
     padding: theme.spacing.xl,
+    marginTop: 40,
     ...theme.shadows.medium,
   },
-  header: { alignItems: 'center', marginBottom: 30 },
+  header: { alignItems: 'center', marginBottom: 25 },
   logoContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 24,
+    width: 70,
+    height: 70,
+    borderRadius: 20,
     backgroundColor: theme.colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 15,
     ...theme.shadows.medium,
   },
-  title: { fontSize: 26, fontWeight: theme.typography.weights.bold, color: theme.colors.secondary },
-  subtitle: { fontSize: 14, color: theme.colors.textMuted, marginTop: 8, textAlign: 'center' },
+  title: { fontSize: 24, fontWeight: theme.typography.weights.bold, color: theme.colors.secondary },
+  subtitle: { fontSize: 13, color: theme.colors.textMuted, marginTop: 4, textAlign: 'center' },
   form: { width: '100%' },
-  inputLabelContainer: { marginBottom: 8, marginStart: 4 },
-  inputLabel: { fontSize: 13, fontWeight: theme.typography.weights.bold, color: theme.colors.secondary, textTransform: 'uppercase', letterSpacing: 0.5 },
+  inputLabelContainer: { marginBottom: 6, paddingHorizontal: 4 },
+  inputLabel: { fontSize: 12, fontWeight: theme.typography.weights.bold, color: theme.colors.secondary, textTransform: 'uppercase', letterSpacing: 0.5 },
   inputWrapper: {
-    flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: theme.colors.background,
-    borderRadius: 16,
-    marginBottom: 20,
-    paddingHorizontal: 16,
+    borderRadius: 14,
+    marginBottom: 16,
+    paddingHorizontal: 14,
     borderWidth: 1,
     borderColor: theme.colors.border,
   },
-  inputIcon: { marginEnd: 12 },
-  input: { flex: 1, height: 56, color: theme.colors.secondary, fontSize: 15, fontWeight: theme.typography.weights.medium },
+  inputIcon: { marginRight: 10 },
+  inputIconAr: { marginLeft: 10 },
+  input: { flex: 1, height: 50, color: theme.colors.secondary, fontSize: 14, fontWeight: theme.typography.weights.medium },
   loginButton: {
     backgroundColor: theme.colors.primary,
-    height: 60,
-    borderRadius: 18,
+    height: 56,
+    borderRadius: 16,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 8,
     ...theme.shadows.medium,
   },
   loginButtonText: {
     color: theme.colors.white,
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: theme.typography.weights.bold,
-    marginEnd: 8,
+    marginHorizontal: 6,
+  },
+  quickLoginSection: {
+    marginTop: 10,
+  },
+  quickLoginDivider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: theme.colors.border,
+    opacity: 0.5,
+  },
+  dividerText: {
+    marginHorizontal: 10,
+    fontSize: 11,
+    color: theme.colors.textMuted,
+    fontWeight: theme.typography.weights.bold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  quickLoginGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  quickLoginChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.background,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 10,
+    marginBottom: 8,
+    width: '48%',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  quickLoginChipText: {
+    marginHorizontal: 6,
+    fontSize: 10,
+    color: theme.colors.secondary,
+    fontWeight: theme.typography.weights.semibold,
+    flex: 1,
   },
   footerText: {
     textAlign: 'center',
     color: 'rgba(0,0,0,0.3)',
-    marginTop: 30,
-    fontSize: 12,
+    marginTop: 25,
+    fontSize: 11,
     fontWeight: theme.typography.weights.medium,
   }
 });

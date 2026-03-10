@@ -27,7 +27,9 @@
     "error_fill_fields": "يرجى ملء جميع الحقول",
     "error_login_failed": "فشل تسجيل الدخول",
     "unauthorized_vendor": "غير مصرح: يمكن للتجار فقط الوصول إلى هذا التطبيق",
-    "merchant_portal": "بوابة التجار المعتمدة"
+    "merchant_portal": "بوابة التجار المعتمدة",
+    "quick_login_title": "الدخول السريع (وضع التطوير)",
+    "quick_login_desc": "اختر متجراً للدخول الفوري"
   },
   "dashboard": {
     "title": "لوحة التحكم",
@@ -61,7 +63,14 @@
     "submit_proposals": "إرسال المقترحات",
     "proposal_sent": "تم إرسال المقترحات بنجاح",
     "order_accepted": "تم قبول الطلب بنجاح",
-    "order_id": "طلب"
+    "order_id": "طلب",
+    "no_orders": "لا توجد طلبات",
+    "weight_adjustment": "تعديل الوزن",
+    "adjust_weight": "تعديل الوزن",
+    "send_weight_proposal": "إرسال مقترح الوزن",
+    "weight": "الوزن",
+    "status_proposal_sent": "تم إرسال مقترح",
+    "actual_weight": "الوزن الفعلي"
   },
   "products": {
     "title": "المنتجات",
@@ -99,5 +108,43 @@
     "customer_rating": "تقييم العملاء",
     "total_reviews": "إجمالي التقييمات",
     "average_stars": "متوسط النجوم"
+  },
+  "vendors": {
+    "madinaty_supermarket": "سوبر ماركت مدينتي",
+    "al_jazira_supermarket": "سوبر ماركت الجزيرة",
+    "moataz_pharmacy": "صيدلية معتز",
+    "el_madina_bakery": "مخبز المدينة",
+    "al_radwa_butcher": "جزارة الرضوى",
+    "al_hakeem_poultry": "دواجن آل حكيم",
+    "al_hakeem_fish": "أسماك آل حكيم",
+    "sanaqreh": "سوبر ماركت السناقرة",
+    "ahmed_yehia": "صيدلية أحمد يحيى",
+    "sabawi": "صيدلية السبعاوي",
+    "abdullah_butcher": "جزارة عبدالله",
+    "beheiry_poultry": "طيور البحيري",
+    "ghanem_fish": "أسماك غانم",
+    "mutawakkil_fish": "أسماك المتوكل",
+    "abu_youssef_fish": "أسماك أبو يوسف",
+    "bondoqa": "مقلاة بندقة",
+    "ashri": "مقلاة العشري",
+    "lozina": "مقلاة لوزينا",
+    "al_baraka_bakery": "مخبز البركة",
+    "abu_omar": "حلواني أبو عمر",
+    "rawan": "حلواني روان",
+    "shady_library": "مكتبة شادي",
+    "awlad_ragab": "خضروات وفاكهة أولاد رجب",
+    "mazaare_al_kheir": "مزارع الخير"
+  },
+  "inventory": {
+    "update_stock": "تحديث المخزون",
+    "current_stock": "المخزون الحالي",
+    "new_stock": "المخزون الجديد",
+    "stock_updated": "تم تحديث المخزون بنجاح",
+    "unit": "وحدة",
+    "weight": "وزن",
+    "units": {
+      "kg": "كجم",
+      "gram": "جرام"
+    }
   }
 }
