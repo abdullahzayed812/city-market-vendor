@@ -14,6 +14,7 @@
     "reject": "Reject",
     "vendor": "Vendor",
     "view_details": "View Details",
+    "select_action": "Select Action",
     "today": "today",
     "vs_avg": "vs avg"
   },
@@ -40,6 +41,7 @@
     "shop_status_updated": "Shop status updated successfully",
     "open": "Open",
     "closed": "Closed",
+    "suspended": "Suspended",
     "control_visibility": "Control your visibility to customers"
   },
   "orders": {
@@ -52,6 +54,8 @@
     "status_picked_up": "Picked Up",
     "status_delivered": "Delivered",
     "status_cancelled": "Cancelled",
+    "status_preparing": "Preparing",
+    "status_on_the_way": "On The Way",
     "propose_changes": "Propose Changes",
     "update_status": "Update Status",
     "accept_order": "Accept Order",
@@ -70,7 +74,14 @@
     "send_weight_proposal": "Send Weight Proposal",
     "weight": "Weight",
     "status_proposal_sent": "Proposal Sent",
-    "actual_weight": "Actual Weight"
+    "actual_weight": "Actual Weight",
+    "prepare_order": "Prepare Order",
+    "no_items": "No items",
+    "unavailable": "Unavailable",
+    "original_qty": "Original Qty",
+    "new_qty": "New Qty",
+    "requested_weight": "Requested Weight",
+    "new_weight": "New Weight"
   },
   "products": {
     "title": "Products",
@@ -105,6 +116,7 @@
   "reviews": {
     "title": "Store Reviews",
     "no_reviews": "No reviews yet",
+    "no_comment": "No comment",
     "customer_rating": "Customer Rating",
     "total_reviews": "Total Reviews",
     "average_stars": "Average Stars"
@@ -140,6 +152,9 @@
     "current_stock": "Current Stock",
     "new_stock": "New Stock",
     "stock_updated": "Stock updated successfully",
+    "update_price": "Update Price",
+    "new_price": "New Price",
+    "price_updated": "Price updated successfully",
     "unit": "Unit",
     "weight": "Weight",
     "units": {

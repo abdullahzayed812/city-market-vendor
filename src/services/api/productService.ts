@@ -30,4 +30,11 @@ export const ProductService = {
     );
     return response.data?.data;
   },
+  updatePrice: async (id: string, price: number) => {
+    const response = await apiClient.patch<ApiResponse<null>>(
+      `/catalog/products/${id}/price`,
+      { price },
+    );
+    return response.data?.data;
+  },
 };

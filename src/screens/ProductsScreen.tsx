@@ -14,7 +14,15 @@ import {
   Platform,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Package, MoreVertical, Plus, X, Save } from 'lucide-react-native';
+import {
+  Package,
+  Plus,
+  X,
+  Save,
+  MoreVertical,
+  ClipboardList,
+  Tag,
+} from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useProducts } from '../hooks/useProducts';
 import { theme } from '../theme';
@@ -128,8 +136,157 @@ const StockUpdateModal = ({
   );
 };
 
+const PriceUpdateModal = ({
+  visible,
+  product,
+  onClose,
+  onSave,
+  isUpdating,
+}: any) => {
+  const { t } = useTranslation();
+  const [value, setValue] = useState(product?.price?.toString() || '0');
+
+  React.useEffect(() => {
+    setValue(product?.price?.toString() || '0');
+  }, [product, visible]);
+
+  const handleSave = () => {
+    const numValue = parseFloat(value) || 0;
+    onSave(product.id, numValue);
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="fade">
+      <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalContainer}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {t('inventory.update_price')}
+              </Text>
+              <TouchableOpacity onPress={onClose}>
+                <X size={24} color={theme.colors.secondary} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalBody}>
+              <Text style={styles.productLabel}>{product?.name}</Text>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>
+                  {t('inventory.new_price')}
+                </Text>
+                <View style={styles.inputWrapper}>
+                  <TextInput
+                    style={styles.stockInput}
+                    value={value}
+                    onChangeText={setValue}
+                    keyboardType="decimal-pad"
+                    autoFocus
+                  />
+                  <Text style={styles.unitText}>$</Text>
+                </View>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.saveBtn, isUpdating && { opacity: 0.7 }]}
+              onPress={handleSave}
+              disabled={isUpdating}
+            >
+              {isUpdating ? (
+                <ActivityIndicator color={theme.colors.white} size="small" />
+              ) : (
+                <>
+                  <Save size={20} color={theme.colors.white} />
+                  <Text style={styles.saveBtnText}>{t('common.save')}</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </View>
+    </Modal>
+  );
+};
+
+const ProductOptionsModal = ({
+  visible,
+  product,
+  onClose,
+  onUpdateStock,
+  onUpdatePrice,
+}: any) => {
+  const { t } = useTranslation();
+
+  return (
+    <Modal visible={visible} transparent animationType="fade">
+      <TouchableOpacity
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPress={onClose}
+      >
+        <View style={styles.optionsModalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>{t('common.select_action')}</Text>
+            <TouchableOpacity onPress={onClose}>
+              <X size={24} color={theme.colors.secondary} />
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.productLabel}>{product?.name}</Text>
+
+          <View style={styles.optionsContainer}>
+            <TouchableOpacity
+              style={styles.optionItem}
+              onPress={() => {
+                onClose();
+                onUpdateStock(product);
+              }}
+            >
+              <View
+                style={[
+                  styles.optionIcon,
+                  { backgroundColor: theme.colors.primary + '15' },
+                ]}
+              >
+                <ClipboardList size={22} color={theme.colors.primary} />
+              </View>
+              <Text style={styles.optionText}>
+                {t('inventory.update_stock')}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.optionItem}
+              onPress={() => {
+                onClose();
+                onUpdatePrice(product);
+              }}
+            >
+              <View
+                style={[
+                  styles.optionIcon,
+                  { backgroundColor: theme.colors.success + '15' },
+                ]}
+              >
+                <Tag size={22} color={theme.colors.success} />
+              </View>
+              <Text style={styles.optionText}>
+                {t('inventory.update_price')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
+};
+
 // Separate Product Card Component for better performance
-const ProductCard = React.memo(({ item, onUpdateStock }: any) => {
+const ProductCard = React.memo(({ item, onPressMore }: any) => {
   const { t } = useTranslation();
   const isWeight = item.measurementType === MeasurementType.WEIGHT;
 
@@ -153,19 +310,18 @@ const ProductCard = React.memo(({ item, onUpdateStock }: any) => {
 
   return (
     <View style={styles.productCardWrapper}>
-      <TouchableOpacity
-        style={styles.productCard}
-        onPress={() => onUpdateStock(item)}
-        activeOpacity={0.9}
-      >
+      <View style={styles.productCard}>
         <View style={styles.imageWrapper}>
           <ImageWithPlaceholder
             uri={item.imageUrl ? `${getBaseURL()}${item.imageUrl}` : null}
             style={styles.productImage}
           />
-          {/* <TouchableOpacity style={styles.moreBtn}>
-            <MoreVertical size={16} color={theme.colors.white} />
-          </TouchableOpacity> */}
+          <TouchableOpacity
+            style={styles.moreBtn}
+            onPress={() => onPressMore(item)}
+          >
+            <MoreVertical size={18} color={theme.colors.white} />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.productInfo}>
@@ -197,19 +353,28 @@ const ProductCard = React.memo(({ item, onUpdateStock }: any) => {
             </View>
           </View>
         </View>
-      </TouchableOpacity>
+      </View>
     </View>
   );
 });
 
 const ProductsScreen = () => {
   const { t } = useTranslation();
-  const { products, categories, isLoading, updateStock, isUpdatingStock } =
-    useProducts();
+  const {
+    products,
+    categories,
+    isLoading,
+    updateStock,
+    isUpdatingStock,
+    updatePrice,
+    isUpdatingPrice,
+  } = useProducts();
   const [selectedProduct, setSelectedProduct] = useState<VendorProduct | null>(
     null,
   );
   const [modalVisible, setModalVisible] = useState(false);
+  const [priceModalVisible, setPriceModalVisible] = useState(false);
+  const [optionsModalVisible, setOptionsModalVisible] = useState(false);
 
   // Chunk products into pairs for grid layout
   const sections = useMemo(() => {
@@ -236,6 +401,16 @@ const ProductsScreen = () => {
     setModalVisible(true);
   }, []);
 
+  const handleUpdatePricePress = useCallback((product: any) => {
+    setSelectedProduct(product);
+    setPriceModalVisible(true);
+  }, []);
+
+  const handleMorePress = useCallback((product: any) => {
+    setSelectedProduct(product);
+    setOptionsModalVisible(true);
+  }, []);
+
   const handleSaveStock = useCallback(
     (id: string, stock?: number, weight?: number) => {
       updateStock(
@@ -248,6 +423,18 @@ const ProductsScreen = () => {
     [updateStock],
   );
 
+  const handleSavePrice = useCallback(
+    (id: string, price: number) => {
+      updatePrice(
+        { id, price },
+        {
+          onSuccess: () => setPriceModalVisible(false),
+        },
+      );
+    },
+    [updatePrice],
+  );
+
   const renderRow = useCallback(
     ({ item }: { item: any[] }) => (
       <View style={styles.row}>
@@ -255,13 +442,13 @@ const ProductsScreen = () => {
           <ProductCard
             key={product.id}
             item={product}
-            onUpdateStock={handleUpdateStockPress}
+            onPressMore={handleMorePress}
           />
         ))}
         {item.length === 1 && <View style={styles.productCardWrapper} />}
       </View>
     ),
-    [handleUpdateStockPress],
+    [handleMorePress],
   );
 
   if (isLoading) {
@@ -310,6 +497,22 @@ const ProductsScreen = () => {
         onClose={() => setModalVisible(false)}
         onSave={handleSaveStock}
         isUpdating={isUpdatingStock}
+      />
+
+      <PriceUpdateModal
+        visible={priceModalVisible}
+        product={selectedProduct}
+        onClose={() => setPriceModalVisible(false)}
+        onSave={handleSavePrice}
+        isUpdating={isUpdatingPrice}
+      />
+
+      <ProductOptionsModal
+        visible={optionsModalVisible}
+        product={selectedProduct}
+        onClose={() => setOptionsModalVisible(false)}
+        onUpdateStock={handleUpdateStockPress}
+        onUpdatePrice={handleUpdatePricePress}
       />
     </SafeAreaView>
   );
@@ -487,6 +690,42 @@ const styles = StyleSheet.create({
     color: theme.colors.white,
     fontSize: 16,
     fontWeight: '800',
+  },
+
+  // Options Modal Styles
+  optionsModalContent: {
+    backgroundColor: theme.colors.surface,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    padding: 24,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+    width: '100%',
+    alignSelf: 'center',
+    position: 'absolute',
+    bottom: 0,
+  },
+  optionsContainer: {
+    gap: 12,
+  },
+  optionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: theme.colors.background,
+    borderRadius: 16,
+    gap: 16,
+  },
+  optionIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  optionText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: theme.colors.secondary,
   },
 });
 

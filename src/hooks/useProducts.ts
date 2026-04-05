@@ -54,6 +54,26 @@ export const useProducts = () => {
     }
   });
 
+  const updatePriceMutation = useMutation({
+    mutationFn: ({ id, price }: { id: string; price: number }) =>
+      ProductService.updatePrice(id, price),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vendorProducts', vendorId] });
+      Toast.show({
+        type: 'success',
+        text1: t('common.save'),
+        text2: t('inventory.price_updated'),
+      });
+    },
+    onError: (error: any) => {
+      Toast.show({
+        type: 'error',
+        text1: t('common.error'),
+        text2: error.message || 'Failed to update price',
+      });
+    },
+  });
+
   useEffect(() => {
     if (!socket || !vendorId) return;
 
@@ -82,6 +102,8 @@ export const useProducts = () => {
     isLoading, 
     error,
     updateStock: updateStockMutation.mutate,
-    isUpdatingStock: updateStockMutation.isPending
+    isUpdatingStock: updateStockMutation.isPending,
+    updatePrice: updatePriceMutation.mutate,
+    isUpdatingPrice: updatePriceMutation.isPending,
   };
 };

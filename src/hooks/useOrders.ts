@@ -13,7 +13,7 @@ export const useOrders = () => {
   const vendorId = vendor?.id;
 
   const { data: orders, isLoading } = useQuery({
-    queryKey: ['vendorOrders', vendorId],
+    queryKey: ['vendor-orders', vendorId],
     queryFn: () => OrderService.getVendorOrders(vendorId!),
     enabled: !!vendorId,
   });
@@ -22,8 +22,7 @@ export const useOrders = () => {
     if (!socket || !vendorId) return;
 
     const handleUpdate = () => {
-      queryClient.invalidateQueries({ queryKey: ['vendorOrders', vendorId] });
-      queryClient.invalidateQueries({ queryKey: ['vendorStats', vendorId] });
+      queryClient.invalidateQueries({ queryKey: ['vendor-orders', vendorId] });
     };
 
     const events = [

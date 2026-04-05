@@ -64,6 +64,18 @@ const DashboardScreen = () => {
   }
 
   const isOpen = profile?.status === ShopStatus.OPEN;
+  const isSuspended = profile?.status === ShopStatus.SUSPENDED;
+  const statusLabel = isOpen 
+    ? t('dashboard.open') 
+    : isSuspended 
+      ? t('dashboard.suspended') 
+      : t('dashboard.closed');
+  const statusColor = isOpen 
+    ? theme.colors.success 
+    : isSuspended 
+      ? theme.colors.warning 
+      : theme.colors.error;
+
   const activeOrdersCount =
     orders?.filter(o => o.status !== 'DELIVERED' && o.status !== 'CANCELLED')
       .length || 0;
@@ -97,9 +109,7 @@ const DashboardScreen = () => {
             style={[
               styles.statusIndicator,
               {
-                backgroundColor: isOpen
-                  ? theme.colors.success + '15'
-                  : theme.colors.error + '15',
+                backgroundColor: statusColor + '15',
               },
             ]}
           >
@@ -107,19 +117,17 @@ const DashboardScreen = () => {
               style={[
                 styles.statusDot,
                 {
-                  backgroundColor: isOpen
-                    ? theme.colors.success
-                    : theme.colors.error,
+                  backgroundColor: statusColor,
                 },
               ]}
             />
             <Text
               style={[
                 styles.statusIndicatorText,
-                { color: isOpen ? theme.colors.success : theme.colors.error },
+                { color: statusColor },
               ]}
             >
-              {isOpen ? t('dashboard.open') : t('dashboard.closed')}
+              {statusLabel}
             </Text>
           </View>
         </View>

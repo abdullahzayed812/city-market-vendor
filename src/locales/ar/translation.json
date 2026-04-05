@@ -14,6 +14,7 @@
     "reject": "رفض",
     "vendor": "تاجر",
     "view_details": "عرض التفاصيل",
+    "select_action": "اختر إجراءً",
     "today": "اليوم",
     "vs_avg": "مقارنة بالمتوسط"
   },
@@ -40,6 +41,7 @@
     "shop_status_updated": "تم تحديث حالة المتجر بنجاح",
     "open": "مفتوح",
     "closed": "مغلق",
+    "suspended": "موقوف",
     "control_visibility": "التحكم في ظهورك للعملاء"
   },
   "orders": {
@@ -49,6 +51,8 @@
     "status_pending": "قيد الانتظار",
     "status_confirmed": "مؤكد",
     "status_ready": "جاهز",
+    "status_preparing": "جاري التجهيز",
+    "status_on_the_way": "في الطريق",
     "status_picked_up": "تم الاستلام",
     "status_delivered": "تم التوصيل",
     "status_cancelled": "ملغي",
@@ -70,7 +74,14 @@
     "send_weight_proposal": "إرسال مقترح الوزن",
     "weight": "الوزن",
     "status_proposal_sent": "تم إرسال مقترح",
-    "actual_weight": "الوزن الفعلي"
+    "actual_weight": "الوزن الفعلي",
+    "prepare_order": "تجهيز الطلب",
+    "no_items": "لا توجد عناصر",
+    "unavailable": "غير متوفر",
+    "original_qty": "الكمية الأصلية",
+    "new_qty": "الكمية الجديدة",
+    "requested_weight": "الوزن المطلوب",
+    "new_weight": "الوزن الجديد"
   },
   "products": {
     "title": "المنتجات",
@@ -105,6 +116,7 @@
   "reviews": {
     "title": "تقييمات المتجر",
     "no_reviews": "لا توجد تقييمات بعد",
+    "no_comment": "لا يوجد تعليق",
     "customer_rating": "تقييم العملاء",
     "total_reviews": "إجمالي التقييمات",
     "average_stars": "متوسط النجوم"
@@ -140,6 +152,9 @@
     "current_stock": "المخزون الحالي",
     "new_stock": "المخزون الجديد",
     "stock_updated": "تم تحديث المخزون بنجاح",
+    "update_price": "تحديث السعر",
+    "new_price": "السعر الجديد",
+    "price_updated": "تم تحديث السعر بنجاح",
     "unit": "وحدة",
     "weight": "وزن",
     "units": {
