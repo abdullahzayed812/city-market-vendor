@@ -462,14 +462,7 @@ const ProductsScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      <CustomHeader
-        title={t('products.title')}
-        rightComponent={
-          <TouchableOpacity style={styles.headerAddBtn}>
-            <Plus size={24} color={theme.colors.primary} />
-          </TouchableOpacity>
-        }
-      />
+      <CustomHeader title={t('products.title')} />
 
       <SectionList
         sections={sections}
