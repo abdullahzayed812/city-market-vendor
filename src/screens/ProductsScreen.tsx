@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -24,7 +24,6 @@ import {
   Tag,
 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useProducts } from '../hooks/useProducts';
 import { theme } from '../theme';
 import CustomHeader from '../components/common/CustomHeader';
 import { getBaseURL } from '../services/api/config';
@@ -34,11 +33,12 @@ import {
   VendorProduct,
   WeightUnit,
 } from '@city-market/shared';
+import { useProductsLogic } from '../hooks/useProductsLogic';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - theme.spacing.lg * 2 - theme.spacing.md) / 2;
 
-const StockUpdateModal = ({
+const StockUpdateModal = React.memo(({
   visible,
   product,
   onClose,
@@ -134,9 +134,9 @@ const StockUpdateModal = ({
       </View>
     </Modal>
   );
-};
+});
 
-const PriceUpdateModal = ({
+const PriceUpdateModal = React.memo(({
   visible,
   product,
   onClose,
@@ -210,9 +210,9 @@ const PriceUpdateModal = ({
       </View>
     </Modal>
   );
-};
+});
 
-const ProductOptionsModal = ({
+const ProductOptionsModal = React.memo(({
   visible,
   product,
   onClose,
@@ -269,10 +269,10 @@ const ProductOptionsModal = ({
               <View
                 style={[
                   styles.optionIcon,
-                  { backgroundColor: theme.colors.success + '15' },
+                  { backgroundColor: theme.colors.accent + '15' },
                 ]}
               >
-                <Tag size={22} color={theme.colors.success} />
+                <Tag size={22} color={theme.colors.accent} />
               </View>
               <Text style={styles.optionText}>
                 {t('inventory.update_price')}
@@ -283,173 +283,81 @@ const ProductOptionsModal = ({
       </TouchableOpacity>
     </Modal>
   );
-};
+});
 
-// Separate Product Card Component for better performance
-const ProductCard = React.memo(({ item, onPressMore }: any) => {
-  const { t } = useTranslation();
+const ProductCard = React.memo(({ item, onOpenOptions, t }: any) => {
   const isWeight = item.measurementType === MeasurementType.WEIGHT;
-
-  let displayStock = item.stockQuantity.toString();
-  let unitLabel = ''; // Default for unit-based is empty or 'Unit'
-
-  if (isWeight) {
-    const grams = item.stockWeightGrams || 0;
-    if (item.weightUnit === WeightUnit.KG) {
-      displayStock = (grams / 1000).toFixed(1);
-      unitLabel = t('inventory.units.kg');
-    } else {
-      displayStock = grams.toString();
-      unitLabel = t('inventory.units.gram');
-    }
-  }
-
-  const isLow = isWeight
-    ? (item.stockWeightGrams || 0) < 5000
-    : item.stockQuantity < 10;
+  const stock = isWeight
+    ? (item.stockWeightGrams / 1000).toFixed(1) + ' kg'
+    : item.stockQuantity;
 
   return (
-    <View style={styles.productCardWrapper}>
-      <View style={styles.productCard}>
-        <View style={styles.imageWrapper}>
-          <ImageWithPlaceholder
-            uri={item.imageUrl ? `${getBaseURL()}${item.imageUrl}` : null}
-            style={styles.productImage}
-          />
-          <TouchableOpacity
-            style={styles.moreBtn}
-            onPress={() => onPressMore(item)}
-          >
-            <MoreVertical size={18} color={theme.colors.white} />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.productInfo}>
-          <Text style={styles.productName} numberOfLines={1}>
-            {item.name}
-          </Text>
-          <View style={styles.priceRow}>
-            <Text style={styles.productPrice}>${item.price.toFixed(2)}</Text>
-            <View
-              style={[
-                styles.stockBadge,
-                {
-                  backgroundColor: isLow
-                    ? 'rgba(255, 59, 48, 0.1)'
-                    : 'rgba(79, 82, 64, 0.05)',
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.stockText,
-                  {
-                    color: isLow ? theme.colors.error : theme.colors.primary,
-                  },
-                ]}
-              >
-                {displayStock} {unitLabel}
-              </Text>
-            </View>
-          </View>
+    <TouchableOpacity
+      style={styles.productCard}
+      onPress={() => onOpenOptions(item)}
+      activeOpacity={0.8}
+    >
+      <View style={styles.imageContainer}>
+        <ImageWithPlaceholder
+          uri={item.imageUrl ? `${getBaseURL()}${item.imageUrl}` : null}
+          style={styles.productImage}
+        />
+        <View
+          style={[
+            styles.stockBadge,
+            {
+              backgroundColor:
+                (isWeight ? item.stockWeightGrams : item.stockQuantity) > 0
+                  ? theme.colors.success
+                  : theme.colors.error,
+            },
+          ]}
+        >
+          <Text style={styles.stockBadgeText}>{stock}</Text>
         </View>
       </View>
-    </View>
+
+      <View style={styles.productInfo}>
+        <Text style={styles.productName} numberOfLines={1}>
+          {item.name}
+        </Text>
+        <View style={styles.priceContainer}>
+          <Text style={styles.productPrice}>${item.price.toFixed(2)}</Text>
+          <Text style={styles.measurementText}>
+            {isWeight ? '/kg' : '/unit'}
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={styles.moreBtn}
+          onPress={() => onOpenOptions(item)}
+        >
+          <MoreVertical size={16} color={theme.colors.textMuted} />
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
   );
 });
 
 const ProductsScreen = () => {
-  const { t } = useTranslation();
   const {
-    products,
-    categories,
+    t,
     isLoading,
-    updateStock,
+    sections,
+    stockModalVisible,
+    setStockModalVisible,
+    priceModalVisible,
+    setPriceModalVisible,
+    optionsModalVisible,
+    setOptionsModalVisible,
+    selectedProduct,
+    handleUpdateStock,
     isUpdatingStock,
-    updatePrice,
+    handleUpdatePrice,
     isUpdatingPrice,
-  } = useProducts();
-  const [selectedProduct, setSelectedProduct] = useState<VendorProduct | null>(
-    null,
-  );
-  const [modalVisible, setModalVisible] = useState(false);
-  const [priceModalVisible, setPriceModalVisible] = useState(false);
-  const [optionsModalVisible, setOptionsModalVisible] = useState(false);
-
-  // Chunk products into pairs for grid layout
-  const sections = useMemo(() => {
-    if (!products || !categories) return [];
-
-    return categories
-      .map(cat => {
-        const catProducts = products.filter(p => p.vendorCategoryId === cat.id);
-        const chunkedProducts = [];
-        for (let i = 0; i < catProducts.length; i += 2) {
-          chunkedProducts.push(catProducts.slice(i, i + 2));
-        }
-        return {
-          title: cat.name,
-          id: cat.id,
-          data: chunkedProducts,
-        };
-      })
-      .filter(section => section.data.length > 0);
-  }, [products, categories]);
-
-  const handleUpdateStockPress = useCallback((product: any) => {
-    setSelectedProduct(product);
-    setModalVisible(true);
-  }, []);
-
-  const handleUpdatePricePress = useCallback((product: any) => {
-    setSelectedProduct(product);
-    setPriceModalVisible(true);
-  }, []);
-
-  const handleMorePress = useCallback((product: any) => {
-    setSelectedProduct(product);
-    setOptionsModalVisible(true);
-  }, []);
-
-  const handleSaveStock = useCallback(
-    (id: string, stock?: number, weight?: number) => {
-      updateStock(
-        { id, stock, weight },
-        {
-          onSuccess: () => setModalVisible(false),
-        },
-      );
-    },
-    [updateStock],
-  );
-
-  const handleSavePrice = useCallback(
-    (id: string, price: number) => {
-      updatePrice(
-        { id, price },
-        {
-          onSuccess: () => setPriceModalVisible(false),
-        },
-      );
-    },
-    [updatePrice],
-  );
-
-  const renderRow = useCallback(
-    ({ item }: { item: any[] }) => (
-      <View style={styles.row}>
-        {item.map(product => (
-          <ProductCard
-            key={product.id}
-            item={product}
-            onPressMore={handleMorePress}
-          />
-        ))}
-        {item.length === 1 && <View style={styles.productCardWrapper} />}
-      </View>
-    ),
-    [handleMorePress],
-  );
+    openOptions,
+    openStockModal,
+    openPriceModal,
+  } = useProductsLogic();
 
   if (isLoading) {
     return (
@@ -458,6 +366,20 @@ const ProductsScreen = () => {
       </View>
     );
   }
+
+  const renderRow = ({ item }: { item: VendorProduct[] }) => (
+    <View style={styles.row}>
+      {item.map(product => (
+        <ProductCard
+          key={product.id}
+          item={product}
+          onOpenOptions={openOptions}
+          t={t}
+        />
+      ))}
+      {item.length === 1 && <View style={styles.emptyCard} />}
+    </View>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -474,7 +396,6 @@ const ProductsScreen = () => {
           </View>
         )}
         contentContainerStyle={styles.listContent}
-        stickySectionHeadersEnabled={true}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
@@ -484,11 +405,23 @@ const ProductsScreen = () => {
         }
       />
 
-      <StockUpdateModal
-        visible={modalVisible}
+      <TouchableOpacity style={styles.fab}>
+        <Plus size={30} color={theme.colors.white} />
+      </TouchableOpacity>
+
+      <ProductOptionsModal
+        visible={optionsModalVisible}
         product={selectedProduct}
-        onClose={() => setModalVisible(false)}
-        onSave={handleSaveStock}
+        onClose={() => setOptionsModalVisible(false)}
+        onUpdateStock={openStockModal}
+        onUpdatePrice={openPriceModal}
+      />
+
+      <StockUpdateModal
+        visible={stockModalVisible}
+        product={selectedProduct}
+        onClose={() => setStockModalVisible(false)}
+        onSave={handleUpdateStock}
         isUpdating={isUpdatingStock}
       />
 
@@ -496,16 +429,8 @@ const ProductsScreen = () => {
         visible={priceModalVisible}
         product={selectedProduct}
         onClose={() => setPriceModalVisible(false)}
-        onSave={handleSavePrice}
+        onSave={handleUpdatePrice}
         isUpdating={isUpdatingPrice}
-      />
-
-      <ProductOptionsModal
-        visible={optionsModalVisible}
-        product={selectedProduct}
-        onClose={() => setOptionsModalVisible(false)}
-        onUpdateStock={handleUpdateStockPress}
-        onUpdatePrice={handleUpdatePricePress}
       />
     </SafeAreaView>
   );
@@ -514,92 +439,81 @@ const ProductsScreen = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.colors.background },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  headerAddBtn: {
-    padding: 8,
-  },
-  listContent: {
-    paddingBottom: 40,
-  },
+  listContent: { paddingBottom: 100 },
   sectionHeader: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
     backgroundColor: theme.colors.background,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
   },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: theme.colors.primary,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    fontSize: 18,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.secondary,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
+    paddingHorizontal: theme.spacing.lg,
     marginBottom: theme.spacing.md,
   },
-  productCardWrapper: {
-    width: CARD_WIDTH,
-  },
   productCard: {
+    width: CARD_WIDTH,
     backgroundColor: theme.colors.surface,
-    borderRadius: 20,
-    overflow: 'hidden',
+    borderRadius: theme.radius.xl,
     ...theme.shadows.card,
-    height: 210,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.03)',
+    overflow: 'hidden',
   },
-  imageWrapper: {
-    width: '100%',
-    height: 130,
-    position: 'relative',
-    backgroundColor: 'rgba(0,0,0,0.02)',
+  emptyCard: { width: CARD_WIDTH },
+  imageContainer: { width: '100%', height: CARD_WIDTH },
+  productImage: { width: '100%', height: '100%' },
+  stockBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: theme.radius.sm,
   },
-  productImage: {
-    width: '100%',
-    height: '100%',
+  stockBadgeText: {
+    color: theme.colors.white,
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  productInfo: { padding: 12 },
+  productName: {
+    fontSize: 14,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.secondary,
+    marginBottom: 4,
+    paddingRight: 20,
+  },
+  priceContainer: { flexDirection: 'row', alignItems: 'center' },
+  productPrice: {
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.primary,
+  },
+  measurementText: {
+    fontSize: 10,
+    color: theme.colors.textMuted,
+    marginStart: 4,
   },
   moreBtn: {
     position: 'absolute',
-    top: 8,
+    top: 10,
     right: 8,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(0,0,0,0.25)',
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: theme.colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  productInfo: {
-    padding: 12,
-    flex: 1,
-    justifyContent: 'space-between',
-  },
-  productName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: theme.colors.secondary,
-    marginBottom: 4,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  productPrice: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: theme.colors.success,
-  },
-  stockBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  stockText: {
-    fontSize: 11,
-    fontWeight: '700',
+    ...theme.shadows.medium,
   },
   emptyContainer: { alignItems: 'center', marginTop: 100 },
   emptyText: { marginTop: 16, fontSize: 16, color: theme.colors.textMuted },
@@ -608,17 +522,22 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    padding: 20,
+    justifyContent: 'flex-end',
   },
-  modalContainer: {
-    width: '100%',
-  },
+  modalContainer: { width: '100%' },
   modalContent: {
     backgroundColor: theme.colors.surface,
-    borderRadius: 24,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     padding: 24,
-    ...theme.shadows.medium,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+  },
+  optionsModalContent: {
+    backgroundColor: theme.colors.surface,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    padding: 24,
+    minHeight: 300,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -627,97 +546,75 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: 20,
+    fontWeight: theme.typography.weights.bold,
     color: theme.colors.secondary,
   },
-  modalBody: {
-    marginBottom: 24,
-  },
+  modalBody: { marginBottom: 24 },
   productLabel: {
     fontSize: 16,
-    fontWeight: '600',
     color: theme.colors.textMuted,
     marginBottom: 16,
   },
-  inputGroup: {
-    gap: 8,
-  },
+  inputGroup: {},
   inputLabel: {
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: theme.typography.weights.semibold,
     color: theme.colors.secondary,
-    textTransform: 'uppercase',
+    marginBottom: 8,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: theme.colors.background,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderRadius: theme.radius.lg,
     paddingHorizontal: 16,
+    height: 60,
   },
   stockInput: {
     flex: 1,
-    height: 50,
-    fontSize: 18,
-    fontWeight: '700',
-    color: theme.colors.secondary,
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: theme.colors.primary,
   },
   unitText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: theme.colors.textLight,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: theme.colors.textMuted,
   },
   saveBtn: {
     backgroundColor: theme.colors.primary,
-    height: 56,
-    borderRadius: 16,
+    height: 60,
+    borderRadius: theme.radius.lg,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
   },
   saveBtnText: {
     color: theme.colors.white,
-    fontSize: 16,
-    fontWeight: '800',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginStart: 10,
   },
-
-  // Options Modal Styles
-  optionsModalContent: {
-    backgroundColor: theme.colors.surface,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    padding: 24,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
-    width: '100%',
-    alignSelf: 'center',
-    position: 'absolute',
-    bottom: 0,
-  },
-  optionsContainer: {
-    gap: 12,
-  },
+  optionsContainer: { gap: 16 },
   optionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
     backgroundColor: theme.colors.background,
-    borderRadius: 16,
-    gap: 16,
+    padding: 16,
+    borderRadius: theme.radius.xl,
   },
   optionIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 50,
+    height: 50,
+    borderRadius: 15,
     justifyContent: 'center',
     alignItems: 'center',
+    marginEnd: 16,
   },
   optionText: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: theme.typography.weights.bold,
     color: theme.colors.secondary,
   },
 });

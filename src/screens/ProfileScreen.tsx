@@ -7,9 +7,6 @@ import {
   ScrollView,
   StatusBar,
 } from 'react-native';
-import { useTranslation } from 'react-i18next';
-import { useNavigation } from '@react-navigation/native';
-import { useAuth } from '../app/AuthContext';
 import {
   User,
   LogOut,
@@ -23,8 +20,9 @@ import {
 import { theme } from '../theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomHeader from '../components/common/CustomHeader';
+import { useProfileLogic } from '../hooks/useProfileLogic';
 
-const ProfileItem = ({
+const ProfileItem = React.memo(({
   icon: Icon,
   label,
   value,
@@ -57,13 +55,18 @@ const ProfileItem = ({
       </View>
     </TouchableOpacity>
   );
-};
+});
 
 const ProfileScreen = () => {
-  const { t, i18n } = useTranslation();
-  const navigation = useNavigation<any>();
-  const { signOut, vendor, user } = useAuth();
-  const isRTL = i18n.language === 'ar';
+  const {
+    t,
+    isRTL,
+    signOut,
+    vendor,
+    user,
+    toggleLanguage,
+    navigateToReviews,
+  } = useProfileLogic();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -106,8 +109,8 @@ const ProfileScreen = () => {
               icon={Star}
               label={t('profile.reviews')}
               value={vendor?.averageRating?.toFixed(1) || '0.0'}
-              onPress={() => navigation.navigate('Reviews')}
-              isRTL
+              onPress={navigateToReviews}
+              isRTL={isRTL}
             />
             <ProfileItem
               icon={Clock}
@@ -119,10 +122,10 @@ const ProfileScreen = () => {
               icon={Globe}
               label={t('profile.language')}
               value={isRTL ? t('profile.arabic') : t('profile.english')}
-              onPress={() => i18n.changeLanguage(isRTL ? 'en' : 'ar')}
+              onPress={toggleLanguage}
               isLast={true}
               color={theme.colors.info}
-              isRTL
+              isRTL={isRTL}
             />
           </View>
         </View>
@@ -277,7 +280,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 30,
     marginBottom: 40,
-  },
+  }
 });
 
 export default ProfileScreen;

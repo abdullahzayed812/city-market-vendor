@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   StatusBar,
 } from 'react-native';
-import { useTranslation } from 'react-i18next';
 import { theme } from '../theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -18,42 +17,41 @@ import {
   Activity,
   TrendingUp,
 } from 'lucide-react-native';
-import { ShopStatus } from '@city-market/shared';
-import { useOrders } from '../hooks/useOrders';
-import { useVendorProfile } from '../hooks/useVendorProfile';
 import CustomHeader from '../components/common/CustomHeader';
-import { useProducts } from '../hooks/useProducts';
+import { useDashboard } from '../hooks/useDashboard';
+
+const StatCard = React.memo(({ icon: Icon, label, value, color, trend }: any) => (
+  <View style={styles.statCard}>
+    <View style={[styles.iconContainer, { backgroundColor: color + '10' }]}>
+      <Icon size={22} color={color} />
+    </View>
+    <View style={styles.statInfo}>
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+      {trend && (
+        <View style={styles.trendContainer}>
+          <TrendingUp size={12} color={theme.colors.success} />
+          <Text style={styles.trendText}>{trend}</Text>
+        </View>
+      )}
+    </View>
+  </View>
+));
 
 const DashboardScreen = () => {
-  const { t } = useTranslation();
-
   const {
+    t,
     profile,
-    isLoading: profileLoading,
+    profileLoading,
     toggleStatus,
     isUpdatingStatus,
-  } = useVendorProfile();
-
-  const { orders } = useOrders();
-  const { products } = useProducts();
-
-  const StatCard = ({ icon: Icon, label, value, color, trend }: any) => (
-    <View style={styles.statCard}>
-      <View style={[styles.iconContainer, { backgroundColor: color + '10' }]}>
-        <Icon size={22} color={color} />
-      </View>
-      <View style={styles.statInfo}>
-        <Text style={styles.statValue}>{value}</Text>
-        <Text style={styles.statLabel}>{label}</Text>
-        {trend && (
-          <View style={styles.trendContainer}>
-            <TrendingUp size={12} color={theme.colors.success} />
-            <Text style={styles.trendText}>{trend}</Text>
-          </View>
-        )}
-      </View>
-    </View>
-  );
+    activeOrdersCount,
+    todaySales,
+    productsCount,
+    isOpen,
+    statusLabel,
+    statusColor,
+  } = useDashboard();
 
   if (profileLoading) {
     return (
@@ -62,33 +60,6 @@ const DashboardScreen = () => {
       </View>
     );
   }
-
-  const isOpen = profile?.status === ShopStatus.OPEN;
-  const isSuspended = profile?.status === ShopStatus.SUSPENDED;
-  const statusLabel = isOpen 
-    ? t('dashboard.open') 
-    : isSuspended 
-      ? t('dashboard.suspended') 
-      : t('dashboard.closed');
-  const statusColor = isOpen 
-    ? theme.colors.success 
-    : isSuspended 
-      ? theme.colors.warning 
-      : theme.colors.error;
-
-  const activeOrdersCount =
-    orders?.filter(o => o.status !== 'DELIVERED' && o.status !== 'CANCELLED')
-      .length || 0;
-  const todaySales =
-    orders
-      ?.filter(o => {
-        const today = new Date().toDateString();
-        return (
-          new Date(o.createdAt).toDateString() === today &&
-          o.status !== 'CANCELLED'
-        );
-      })
-      .reduce((acc, o) => acc + o.totalAmount, 0) || 0;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -174,7 +145,7 @@ const DashboardScreen = () => {
           <StatCard
             icon={Package}
             label={t('dashboard.total_products')}
-            value={products?.length || '0'}
+            value={productsCount.toString()}
             color={theme.colors.info}
           />
         </View>

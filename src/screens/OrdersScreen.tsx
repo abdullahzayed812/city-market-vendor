@@ -7,33 +7,75 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
-import { useTranslation } from 'react-i18next';
 import { ShoppingBag, ChevronRight, Package, Clock } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../theme';
 import CustomHeader from '../components/common/CustomHeader';
-import { useOrders } from '../hooks/useOrders';
+import { useOrdersLogic } from '../hooks/useOrdersLogic';
+
+const OrderItem = React.memo(({ item, getStatusConfig, t, navigation, isRTL }: any) => {
+  const status = getStatusConfig(item.status);
+  
+  return (
+    <TouchableOpacity
+      style={styles.orderCard}
+      activeOpacity={0.9}
+      onPress={() => navigation.navigate('OrderDetails', { orderId: item.id })}
+    >
+      <View style={styles.orderHeader}>
+        <View style={styles.idGroup}>
+          <View style={styles.iconCircle}>
+            <ShoppingBag size={18} color={theme.colors.primary} />
+          </View>
+          <View>
+            <Text style={styles.orderId}>{t('orders.order_id')} #{item.id.slice(-6).toUpperCase()}</Text>
+            <View style={styles.timeRow}>
+              <Clock size={12} color={theme.colors.textLight} />
+              <Text style={styles.dateText}>
+                {new Date(item.createdAt).toLocaleDateString()}
+              </Text>
+            </View>
+          </View>
+        </View>
+        <View style={[styles.statusBadge, { backgroundColor: status.color + '15' }]}>
+          <Text style={[styles.statusText, { color: status.color }]}>
+            {status.label}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.divider} />
+
+      <View style={styles.orderDetails}>
+        <View style={styles.detailItem}>
+          <Package size={16} color={theme.colors.textMuted} />
+          <Text style={styles.detailText}>
+            {item.items?.length || 0} {t('products.title')}
+          </Text>
+        </View>
+        <Text style={styles.totalAmount}>${item.totalAmount?.toFixed(2)}</Text>
+      </View>
+
+      <View style={styles.cardFooter}>
+        <Text style={styles.viewDetailsText}>{t('common.view_details')}</Text>
+        <ChevronRight
+          size={16}
+          color={theme.colors.primary}
+          style={isRTL && { transform: [{ rotate: '180deg' }] }}
+        />
+      </View>
+    </TouchableOpacity>
+  );
+});
 
 const OrdersScreen = ({ navigation }: any) => {
-  const { t, i18n } = useTranslation();
-  const isRTL = i18n.language === 'ar';
-
-  const { orders, isLoading } = useOrders();
-
-  const getStatusConfig = (status: string) => {
-    switch (status.toUpperCase()) {
-      case 'PENDING': return { color: theme.colors.warning, label: t('orders.status_pending') };
-      case 'CONFIRMED': return { color: theme.colors.info, label: t('orders.status_confirmed') };
-      case 'PROPOSAL_SENT': return { color: theme.colors.info, label: t('orders.status_proposal_sent') };
-      case 'PREPARING': return { color: theme.colors.primary, label: t('orders.status_preparing') };
-      case 'READY': return { color: theme.colors.primary, label: t('orders.status_ready') };
-      case 'PICKED_UP': return { color: theme.colors.secondary, label: t('orders.status_picked_up') };
-      case 'ON_THE_WAY': return { color: theme.colors.secondary, label: t('orders.status_on_the_way') };
-      case 'DELIVERED': return { color: theme.colors.success, label: t('orders.status_delivered') };
-      case 'CANCELLED': return { color: theme.colors.error, label: t('orders.status_cancelled') };
-      default: return { color: theme.colors.textMuted, label: status };
-    }
-  };
+  const { 
+    t, 
+    isRTL, 
+    orders, 
+    isLoading, 
+    getStatusConfig 
+  } = useOrdersLogic();
 
   if (isLoading) {
     return (
@@ -43,67 +85,20 @@ const OrdersScreen = ({ navigation }: any) => {
     );
   }
 
-  const renderOrderItem = ({ item }: any) => {
-    const status = getStatusConfig(item.status);
-    
-    return (
-      <TouchableOpacity
-        style={styles.orderCard}
-        activeOpacity={0.9}
-        onPress={() => navigation.navigate('OrderDetails', { orderId: item.id })}
-      >
-        <View style={styles.orderHeader}>
-          <View style={styles.idGroup}>
-            <View style={styles.iconCircle}>
-              <ShoppingBag size={18} color={theme.colors.primary} />
-            </View>
-            <View>
-              <Text style={styles.orderId}>{t('orders.order_id')} #{item.id.slice(-6).toUpperCase()}</Text>
-              <View style={styles.timeRow}>
-                <Clock size={12} color={theme.colors.textLight} />
-                <Text style={styles.dateText}>
-                  {new Date(item.createdAt).toLocaleDateString()}
-                </Text>
-              </View>
-            </View>
-          </View>
-          <View style={[styles.statusBadge, { backgroundColor: status.color + '15' }]}>
-            <Text style={[styles.statusText, { color: status.color }]}>
-              {status.label}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.divider} />
-
-        <View style={styles.orderDetails}>
-          <View style={styles.detailItem}>
-            <Package size={16} color={theme.colors.textMuted} />
-            <Text style={styles.detailText}>
-              {item.items?.length || 0} {t('products.title')}
-            </Text>
-          </View>
-          <Text style={styles.totalAmount}>${item.totalAmount?.toFixed(2)}</Text>
-        </View>
-
-        <View style={styles.cardFooter}>
-          <Text style={styles.viewDetailsText}>{t('common.view_details')}</Text>
-          <ChevronRight
-            size={16}
-            color={theme.colors.primary}
-            style={isRTL && { transform: [{ rotate: '180deg' }] }}
-          />
-        </View>
-      </TouchableOpacity>
-    );
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       <CustomHeader title={t('orders.title')} />
       <FlatList
         data={orders}
-        renderItem={renderOrderItem}
+        renderItem={({ item }) => (
+          <OrderItem 
+            item={item} 
+            getStatusConfig={getStatusConfig} 
+            t={t} 
+            navigation={navigation} 
+            isRTL={isRTL} 
+          />
+        )}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
