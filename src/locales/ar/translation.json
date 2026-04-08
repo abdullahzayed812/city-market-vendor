@@ -16,7 +16,8 @@
     "view_details": "عرض التفاصيل",
     "select_action": "اختر إجراءً",
     "today": "اليوم",
-    "vs_avg": "مقارنة بالمتوسط"
+    "vs_avg": "مقارنة بالمتوسط",
+    "currency": "ج.م"
   },
   "auth": {
     "login_title": "دخول التجار",
@@ -37,6 +38,9 @@
     "active_orders": "الطلبات النشطة",
     "today_sales": "مبيعات اليوم",
     "total_products": "إجمالي المنتجات",
+    "total_revenue": "إجمالي الإيرادات",
+    "platform_commission": "عمولة المنصة",
+    "net_earnings": "صافي الأرباح",
     "shop_status": "حالة المتجر",
     "shop_status_updated": "تم تحديث حالة المتجر بنجاح",
     "open": "مفتوح",

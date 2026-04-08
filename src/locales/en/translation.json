@@ -16,7 +16,8 @@
     "view_details": "View Details",
     "select_action": "Select Action",
     "today": "today",
-    "vs_avg": "vs avg"
+    "vs_avg": "vs avg",
+    "currency": "EGP"
   },
   "auth": {
     "login_title": "Vendor Login",
@@ -37,6 +38,9 @@
     "active_orders": "Active Orders",
     "today_sales": "Today's Sales",
     "total_products": "Total Products",
+    "total_revenue": "Total Revenue",
+    "platform_commission": "Platform Commission",
+    "net_earnings": "Net Earnings",
     "shop_status": "Shop Status",
     "shop_status_updated": "Shop status updated successfully",
     "open": "Open",

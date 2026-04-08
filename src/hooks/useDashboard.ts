@@ -35,6 +35,20 @@ export const useDashboard = () => {
       .reduce((acc, o) => acc + o.totalAmount, 0) || 0
   , [orders]);
 
+  const totalRevenue = useMemo(() => 
+    orders
+      ?.filter(o => o.status !== 'CANCELLED')
+      .reduce((acc, o) => acc + o.totalAmount, 0) || 0
+  , [orders]);
+
+  const platformCommission = useMemo(() => 
+    totalRevenue * ((profile?.commissionRate || 10) / 100)
+  , [totalRevenue, profile?.commissionRate]);
+
+  const netEarnings = useMemo(() => 
+    totalRevenue - platformCommission
+  , [totalRevenue, platformCommission]);
+
   const isOpen = profile?.status === ShopStatus.OPEN;
   const isSuspended = profile?.status === ShopStatus.SUSPENDED;
   
@@ -62,6 +76,9 @@ export const useDashboard = () => {
     isUpdatingStatus,
     activeOrdersCount,
     todaySales,
+    totalRevenue,
+    platformCommission,
+    netEarnings,
     productsCount: products?.length || 0,
     isOpen,
     statusLabel,

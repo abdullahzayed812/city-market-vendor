@@ -16,27 +16,30 @@ import {
   Package,
   Activity,
   TrendingUp,
+  Wallet,
 } from 'lucide-react-native';
 import CustomHeader from '../components/common/CustomHeader';
 import { useDashboard } from '../hooks/useDashboard';
 
-const StatCard = React.memo(({ icon: Icon, label, value, color, trend }: any) => (
-  <View style={styles.statCard}>
-    <View style={[styles.iconContainer, { backgroundColor: color + '10' }]}>
-      <Icon size={22} color={color} />
+const StatCard = React.memo(
+  ({ icon: Icon, label, value, color, trend }: any) => (
+    <View style={styles.statCard}>
+      <View style={[styles.iconContainer, { backgroundColor: color + '10' }]}>
+        <Icon size={22} color={color} />
+      </View>
+      <View style={styles.statInfo}>
+        <Text style={styles.statValue}>{value}</Text>
+        <Text style={styles.statLabel}>{label}</Text>
+        {trend && (
+          <View style={styles.trendContainer}>
+            <TrendingUp size={12} color={theme.colors.success} />
+            <Text style={styles.trendText}>{trend}</Text>
+          </View>
+        )}
+      </View>
     </View>
-    <View style={styles.statInfo}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-      {trend && (
-        <View style={styles.trendContainer}>
-          <TrendingUp size={12} color={theme.colors.success} />
-          <Text style={styles.trendText}>{trend}</Text>
-        </View>
-      )}
-    </View>
-  </View>
-));
+  ),
+);
 
 const DashboardScreen = () => {
   const {
@@ -47,6 +50,9 @@ const DashboardScreen = () => {
     isUpdatingStatus,
     activeOrdersCount,
     todaySales,
+    totalRevenue,
+    platformCommission,
+    netEarnings,
     productsCount,
     isOpen,
     statusLabel,
@@ -92,12 +98,7 @@ const DashboardScreen = () => {
                 },
               ]}
             />
-            <Text
-              style={[
-                styles.statusIndicatorText,
-                { color: statusColor },
-              ]}
-            >
+            <Text style={[styles.statusIndicatorText, { color: statusColor }]}>
               {statusLabel}
             </Text>
           </View>
@@ -138,9 +139,27 @@ const DashboardScreen = () => {
           <StatCard
             icon={DollarSign}
             label={t('dashboard.today_sales')}
-            value={`$${todaySales.toFixed(2)}`}
+            value={`${t('common.currency')} ${todaySales.toFixed(2)}`}
             color={theme.colors.success}
             trend={`+8% ${t('common.vs_avg')}`}
+          />
+          <StatCard
+            icon={DollarSign}
+            label={t('dashboard.total_revenue')}
+            value={`${t('common.currency')} ${totalRevenue.toFixed(2)}`}
+            color={theme.colors.primary}
+          />
+          <StatCard
+            icon={TrendingUp}
+            label={`${t('dashboard.platform_commission')} (${profile?.commissionRate || 10}%)`}
+            value={`-${t('common.currency')} ${platformCommission.toFixed(2)}`}
+            color={theme.colors.error}
+          />
+          <StatCard
+            icon={Wallet}
+            label={t('dashboard.net_earnings')}
+            value={`${t('common.currency')} ${netEarnings.toFixed(2)}`}
+            color={theme.colors.success}
           />
           <StatCard
             icon={Package}

@@ -46,7 +46,7 @@ const OrderItem = React.memo(({ t, item }: any) => (
     <View style={styles.itemHeader}>
       <Text style={styles.itemName}>{item.productName}</Text>
       <Text style={styles.itemPrice}>
-        ${item.unitPrice.toFixed(2)}
+        {t('common.currency')} {item.unitPrice.toFixed(2)}
       </Text>
     </View>
 

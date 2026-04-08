@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { useSocket } from '../app/SocketContext';
 import { ProductService } from '../services/api/productService';
 import { useAuth } from '../app/AuthContext';
@@ -18,10 +18,20 @@ export const useProducts = () => {
     data: productsData,
     isLoading: productsLoading,
     error: productsError,
-  } = useQuery({
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
     queryKey: ['vendorProducts', vendorId],
-    queryFn: () => ProductService.getVendorProducts(vendorId!),
+    queryFn: ({ pageParam = 1 }) => ProductService.getVendorProducts(vendorId!, pageParam, 20),
+    getNextPageParam: (lastPage) => {
+      if (!lastPage || typeof lastPage.total !== 'number') return undefined;
+      const { page, limit, total } = lastPage;
+      if (page * limit < total) return page + 1;
+      return undefined;
+    },
     enabled: !!vendorId,
+    initialPageParam: 1,
   });
 
   const {
@@ -90,17 +100,20 @@ export const useProducts = () => {
     };
   }, [socket, vendorId, queryClient]);
 
-  const products = useMemo(() => productsData?.data || [], [productsData]);
+  const products = useMemo(() => productsData?.pages.flatMap(page => page?.data || []) || [], [productsData]);
   const categories = useMemo(() => categoriesData || [], [categoriesData]);
 
   const isLoading = productsLoading || categoriesLoading;
   const error = productsError || categoriesError;
 
-  return { 
-    products, 
-    categories, 
-    isLoading, 
+  return {
+    products,
+    categories,
+    isLoading,
     error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
     updateStock: updateStockMutation.mutate,
     isUpdatingStock: updateStockMutation.isPending,
     updatePrice: updatePriceMutation.mutate,

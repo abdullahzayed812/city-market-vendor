@@ -38,252 +38,240 @@ import { useProductsLogic } from '../hooks/useProductsLogic';
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = (width - theme.spacing.lg * 2 - theme.spacing.md) / 2;
 
-const StockUpdateModal = React.memo(({
-  visible,
-  product,
-  onClose,
-  onSave,
-  isUpdating,
-}: any) => {
-  const { t } = useTranslation();
-  const isWeight = product?.measurementType === MeasurementType.WEIGHT;
+const StockUpdateModal = React.memo(
+  ({ visible, product, onClose, onSave, isUpdating }: any) => {
+    const { t } = useTranslation();
+    const isWeight = product?.measurementType === MeasurementType.WEIGHT;
 
-  let initialValue = product?.stockQuantity?.toString() || '0';
-  let unitLabel = t('inventory.unit');
+    let initialValue = product?.stockQuantity?.toString() || '0';
+    let unitLabel = t('inventory.unit');
 
-  if (isWeight) {
-    const grams = product?.stockWeightGrams || 0;
-    if (product?.weightUnit === WeightUnit.KG) {
-      initialValue = (grams / 1000).toString();
-      unitLabel = t('inventory.units.kg');
-    } else {
-      initialValue = grams.toString();
-      unitLabel = t('inventory.units.gram');
-    }
-  }
-
-  const [value, setValue] = useState(initialValue);
-
-  React.useEffect(() => {
-    setValue(initialValue);
-  }, [initialValue, visible]);
-
-  const handleSave = () => {
-    const numValue = parseFloat(value) || 0;
     if (isWeight) {
-      const grams =
-        product.weightUnit === WeightUnit.KG ? numValue * 1000 : numValue;
-      onSave(product.id, undefined, grams);
-    } else {
-      onSave(product.id, Math.round(numValue), undefined);
+      const grams = product?.stockWeightGrams || 0;
+      if (product?.weightUnit === WeightUnit.KG) {
+        initialValue = (grams / 1000).toString();
+        unitLabel = t('inventory.units.kg');
+      } else {
+        initialValue = grams.toString();
+        unitLabel = t('inventory.units.gram');
+      }
     }
-  };
 
-  return (
-    <Modal visible={visible} transparent animationType="fade">
-      <View style={styles.modalOverlay}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalContainer}
-        >
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                {t('inventory.update_stock')}
-              </Text>
-              <TouchableOpacity onPress={onClose}>
-                <X size={24} color={theme.colors.secondary} />
-              </TouchableOpacity>
-            </View>
+    const [value, setValue] = useState(initialValue);
 
-            <View style={styles.modalBody}>
-              <Text style={styles.productLabel}>{product?.name}</Text>
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>
-                  {t('inventory.new_stock')}
+    React.useEffect(() => {
+      setValue(initialValue);
+    }, [initialValue, visible]);
+
+    const handleSave = () => {
+      const numValue = parseFloat(value) || 0;
+      if (isWeight) {
+        const grams =
+          product.weightUnit === WeightUnit.KG ? numValue * 1000 : numValue;
+        onSave(product.id, undefined, grams);
+      } else {
+        onSave(product.id, Math.round(numValue), undefined);
+      }
+    };
+
+    return (
+      <Modal visible={visible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.modalContainer}
+          >
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>
+                  {t('inventory.update_stock')}
                 </Text>
-                <View style={styles.inputWrapper}>
-                  <TextInput
-                    style={styles.stockInput}
-                    value={value}
-                    onChangeText={setValue}
-                    keyboardType="decimal-pad"
-                    autoFocus
-                  />
-                  <Text style={styles.unitText}>{unitLabel}</Text>
+                <TouchableOpacity onPress={onClose}>
+                  <X size={24} color={theme.colors.secondary} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.modalBody}>
+                <Text style={styles.productLabel}>{product?.name}</Text>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>
+                    {t('inventory.new_stock')}
+                  </Text>
+                  <View style={styles.inputWrapper}>
+                    <TextInput
+                      style={styles.stockInput}
+                      value={value}
+                      onChangeText={setValue}
+                      keyboardType="decimal-pad"
+                      autoFocus
+                    />
+                    <Text style={styles.unitText}>{unitLabel}</Text>
+                  </View>
                 </View>
               </View>
-            </View>
 
-            <TouchableOpacity
-              style={[styles.saveBtn, isUpdating && { opacity: 0.7 }]}
-              onPress={handleSave}
-              disabled={isUpdating}
-            >
-              {isUpdating ? (
-                <ActivityIndicator color={theme.colors.white} size="small" />
-              ) : (
-                <>
-                  <Save size={20} color={theme.colors.white} />
-                  <Text style={styles.saveBtnText}>{t('common.save')}</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      </View>
-    </Modal>
-  );
-});
-
-const PriceUpdateModal = React.memo(({
-  visible,
-  product,
-  onClose,
-  onSave,
-  isUpdating,
-}: any) => {
-  const { t } = useTranslation();
-  const [value, setValue] = useState(product?.price?.toString() || '0');
-
-  React.useEffect(() => {
-    setValue(product?.price?.toString() || '0');
-  }, [product, visible]);
-
-  const handleSave = () => {
-    const numValue = parseFloat(value) || 0;
-    onSave(product.id, numValue);
-  };
-
-  return (
-    <Modal visible={visible} transparent animationType="fade">
-      <View style={styles.modalOverlay}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalContainer}
-        >
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                {t('inventory.update_price')}
-              </Text>
-              <TouchableOpacity onPress={onClose}>
-                <X size={24} color={theme.colors.secondary} />
+              <TouchableOpacity
+                style={[styles.saveBtn, isUpdating && { opacity: 0.7 }]}
+                onPress={handleSave}
+                disabled={isUpdating}
+              >
+                {isUpdating ? (
+                  <ActivityIndicator color={theme.colors.white} size="small" />
+                ) : (
+                  <>
+                    <Save size={20} color={theme.colors.white} />
+                    <Text style={styles.saveBtnText}>{t('common.save')}</Text>
+                  </>
+                )}
               </TouchableOpacity>
             </View>
-
-            <View style={styles.modalBody}>
-              <Text style={styles.productLabel}>{product?.name}</Text>
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>
-                  {t('inventory.new_price')}
-                </Text>
-                <View style={styles.inputWrapper}>
-                  <TextInput
-                    style={styles.stockInput}
-                    value={value}
-                    onChangeText={setValue}
-                    keyboardType="decimal-pad"
-                    autoFocus
-                  />
-                  <Text style={styles.unitText}>$</Text>
-                </View>
-              </View>
-            </View>
-
-            <TouchableOpacity
-              style={[styles.saveBtn, isUpdating && { opacity: 0.7 }]}
-              onPress={handleSave}
-              disabled={isUpdating}
-            >
-              {isUpdating ? (
-                <ActivityIndicator color={theme.colors.white} size="small" />
-              ) : (
-                <>
-                  <Save size={20} color={theme.colors.white} />
-                  <Text style={styles.saveBtnText}>{t('common.save')}</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      </View>
-    </Modal>
-  );
-});
-
-const ProductOptionsModal = React.memo(({
-  visible,
-  product,
-  onClose,
-  onUpdateStock,
-  onUpdatePrice,
-}: any) => {
-  const { t } = useTranslation();
-
-  return (
-    <Modal visible={visible} transparent animationType="fade">
-      <TouchableOpacity
-        style={styles.modalOverlay}
-        activeOpacity={1}
-        onPress={onClose}
-      >
-        <View style={styles.optionsModalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{t('common.select_action')}</Text>
-            <TouchableOpacity onPress={onClose}>
-              <X size={24} color={theme.colors.secondary} />
-            </TouchableOpacity>
-          </View>
-
-          <Text style={styles.productLabel}>{product?.name}</Text>
-
-          <View style={styles.optionsContainer}>
-            <TouchableOpacity
-              style={styles.optionItem}
-              onPress={() => {
-                onClose();
-                onUpdateStock(product);
-              }}
-            >
-              <View
-                style={[
-                  styles.optionIcon,
-                  { backgroundColor: theme.colors.primary + '15' },
-                ]}
-              >
-                <ClipboardList size={22} color={theme.colors.primary} />
-              </View>
-              <Text style={styles.optionText}>
-                {t('inventory.update_stock')}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.optionItem}
-              onPress={() => {
-                onClose();
-                onUpdatePrice(product);
-              }}
-            >
-              <View
-                style={[
-                  styles.optionIcon,
-                  { backgroundColor: theme.colors.accent + '15' },
-                ]}
-              >
-                <Tag size={22} color={theme.colors.accent} />
-              </View>
-              <Text style={styles.optionText}>
-                {t('inventory.update_price')}
-              </Text>
-            </TouchableOpacity>
-          </View>
+          </KeyboardAvoidingView>
         </View>
-      </TouchableOpacity>
-    </Modal>
-  );
-});
+      </Modal>
+    );
+  },
+);
+
+const PriceUpdateModal = React.memo(
+  ({ visible, product, onClose, onSave, isUpdating }: any) => {
+    const { t } = useTranslation();
+    const [value, setValue] = useState(product?.price?.toString() || '0');
+
+    React.useEffect(() => {
+      setValue(product?.price?.toString() || '0');
+    }, [product, visible]);
+
+    const handleSave = () => {
+      const numValue = parseFloat(value) || 0;
+      onSave(product.id, numValue);
+    };
+
+    return (
+      <Modal visible={visible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.modalContainer}
+          >
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>
+                  {t('inventory.update_price')}
+                </Text>
+                <TouchableOpacity onPress={onClose}>
+                  <X size={24} color={theme.colors.secondary} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.modalBody}>
+                <Text style={styles.productLabel}>{product?.name}</Text>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>
+                    {t('inventory.new_price')}
+                  </Text>
+                  <View style={styles.inputWrapper}>
+                    <TextInput
+                      style={styles.stockInput}
+                      value={value}
+                      onChangeText={setValue}
+                      keyboardType="decimal-pad"
+                      autoFocus
+                    />
+                    <Text style={styles.unitText}>{t('common.currency')}</Text>
+                  </View>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.saveBtn, isUpdating && { opacity: 0.7 }]}
+                onPress={handleSave}
+                disabled={isUpdating}
+              >
+                {isUpdating ? (
+                  <ActivityIndicator color={theme.colors.white} size="small" />
+                ) : (
+                  <>
+                    <Save size={20} color={theme.colors.white} />
+                    <Text style={styles.saveBtnText}>{t('common.save')}</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
+    );
+  },
+);
+
+const ProductOptionsModal = React.memo(
+  ({ visible, product, onClose, onUpdateStock, onUpdatePrice }: any) => {
+    const { t } = useTranslation();
+
+    return (
+      <Modal visible={visible} transparent animationType="fade">
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={onClose}
+        >
+          <View style={styles.optionsModalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t('common.select_action')}</Text>
+              <TouchableOpacity onPress={onClose}>
+                <X size={24} color={theme.colors.secondary} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.productLabel}>{product?.name}</Text>
+
+            <View style={styles.optionsContainer}>
+              <TouchableOpacity
+                style={styles.optionItem}
+                onPress={() => {
+                  onClose();
+                  onUpdateStock(product);
+                }}
+              >
+                <View
+                  style={[
+                    styles.optionIcon,
+                    { backgroundColor: theme.colors.primary + '15' },
+                  ]}
+                >
+                  <ClipboardList size={22} color={theme.colors.primary} />
+                </View>
+                <Text style={styles.optionText}>
+                  {t('inventory.update_stock')}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.optionItem}
+                onPress={() => {
+                  onClose();
+                  onUpdatePrice(product);
+                }}
+              >
+                <View
+                  style={[
+                    styles.optionIcon,
+                    { backgroundColor: theme.colors.info + '15' },
+                  ]}
+                >
+                  <Tag size={22} color={theme.colors.info} />
+                </View>
+                <Text style={styles.optionText}>
+                  {t('inventory.update_price')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    );
+  },
+);
 
 const ProductCard = React.memo(({ item, onOpenOptions, t }: any) => {
   const isWeight = item.measurementType === MeasurementType.WEIGHT;
@@ -322,9 +310,11 @@ const ProductCard = React.memo(({ item, onOpenOptions, t }: any) => {
           {item.name}
         </Text>
         <View style={styles.priceContainer}>
-          <Text style={styles.productPrice}>${item.price.toFixed(2)}</Text>
           <Text style={styles.measurementText}>
-            {isWeight ? '/kg' : '/unit'}
+            {isWeight ? ' /kg' : ' /unit'}
+          </Text>
+          <Text style={styles.productPrice}>
+            {t('common.currency')} {item.price.toFixed(2)}
           </Text>
         </View>
         <TouchableOpacity
@@ -357,6 +347,9 @@ const ProductsScreen = () => {
     openOptions,
     openStockModal,
     openPriceModal,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
   } = useProductsLogic();
 
   if (isLoading) {
@@ -403,11 +396,24 @@ const ProductsScreen = () => {
             <Text style={styles.emptyText}>{t('products.no_products')}</Text>
           </View>
         }
+        onEndReached={() => {
+          if (hasNextPage && !isFetchingNextPage) {
+            fetchNextPage();
+          }
+        }}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          isFetchingNextPage ? (
+            <View style={{ marginVertical: 20 }}>
+              <ActivityIndicator size="small" color={theme.colors.primary} />
+            </View>
+          ) : null
+        }
       />
 
-      <TouchableOpacity style={styles.fab}>
+      {/* <TouchableOpacity style={styles.fab}>
         <Plus size={30} color={theme.colors.white} />
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       <ProductOptionsModal
         visible={optionsModalVisible}

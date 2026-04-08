@@ -53,7 +53,7 @@ const OrderItem = React.memo(({ item, getStatusConfig, t, navigation, isRTL }: a
             {item.items?.length || 0} {t('products.title')}
           </Text>
         </View>
-        <Text style={styles.totalAmount}>${item.totalAmount?.toFixed(2)}</Text>
+        <Text style={styles.totalAmount}>{t('common.currency')} {item.totalAmount?.toFixed(2)}</Text>
       </View>
 
       <View style={styles.cardFooter}>

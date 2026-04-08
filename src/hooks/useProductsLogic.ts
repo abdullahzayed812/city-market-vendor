@@ -13,7 +13,9 @@ export const useProductsLogic = () => {
     updatePrice,
     isUpdatingPrice,
     categories,
-    isLoadingCategories,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
   } = useProducts();
 
   const [stockModalVisible, setStockModalVisible] = useState(false);
@@ -38,7 +40,7 @@ export const useProductsLogic = () => {
   }, [products, categories]);
 
   const handleUpdateStock = useCallback(async (id: string, quantity?: number, weightGrams?: number) => {
-    await updateStock({ id, quantity, weightGrams });
+    await updateStock({ id, stock: quantity, weight: weightGrams });
     setStockModalVisible(false);
   }, [updateStock]);
 
@@ -65,7 +67,7 @@ export const useProductsLogic = () => {
   return {
     t,
     products,
-    isLoading: isLoading || isLoadingCategories,
+    isLoading,
     sections,
     stockModalVisible,
     setStockModalVisible,
@@ -81,5 +83,8 @@ export const useProductsLogic = () => {
     openOptions,
     openStockModal,
     openPriceModal,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
   };
 };

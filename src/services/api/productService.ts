@@ -2,9 +2,10 @@ import apiClient from './apiClient';
 import { ApiResponse, VendorProduct, Category } from '@city-market/shared';
 
 export const ProductService = {
-  getVendorProducts: async (vendorId: string) => {
-    const response = await apiClient.get<ApiResponse<{ data: VendorProduct[] }>>(
+  getVendorProducts: async (vendorId: string, page: number = 1, limit: number = 20) => {
+    const response = await apiClient.get<ApiResponse<{ data: VendorProduct[]; total: number; page: number; limit: number }>>(
       `/catalog/products/vendor/${vendorId}`,
+      { params: { page, limit } }
     );
     return response.data?.data;
   },
