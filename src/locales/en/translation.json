@@ -165,5 +165,14 @@
       "kg": "kg",
       "gram": "g"
     }
+  },
+  "financial": {
+    "earnings_and_settlements": "Earnings & Settlements",
+    "track_payouts_subtitle": "Track your payouts and pending balance",
+    "unsettled_orders": "Unsettled Orders",
+    "net_payout": "Net Payout",
+    "settlement_history": "Settlement History",
+    "no_settlement_history": "No settlement history found.",
+    "orders_count": "{{count}} Orders"
   }
 }

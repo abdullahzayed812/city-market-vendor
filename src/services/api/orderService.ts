@@ -24,4 +24,12 @@ export const OrderService = {
     const response = await apiClient.patch<ApiResponse<null>>(`/orders/vendor-orders/${orderId}/status`, { status, itemWeights });
     return response.data?.data;
   },
+  getPendingEarnings: async (vendorId: string) => {
+    const response = await apiClient.get<ApiResponse<any>>(`/settlements/vendor/${vendorId}/pending`);
+    return response.data?.data;
+  },
+  getSettlements: async (vendorId: string) => {
+    const response = await apiClient.get<ApiResponse<any>>(`/settlements?vendorId=${vendorId}`);
+    return response.data?.data;
+  },
 };

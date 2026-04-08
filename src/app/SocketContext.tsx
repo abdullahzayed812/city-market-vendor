@@ -2,16 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from './AuthContext';
-import { Platform } from 'react-native';
-
-const getSocketURL = () => {
-  if (__DEV__) {
-    return Platform.OS === 'android'
-      ? 'http://10.0.2.2:3009'
-      : 'http://localhost:3009';
-  }
-  return 'http://192.168.0.128:3009';
-};
+import { getSocketURL as fetchSocketURL } from '../utils/serverConfig';
 
 interface SocketContextType {
   socket: Socket | null;
@@ -39,8 +30,9 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       }
 
       const token = await AsyncStorage.getItem('auth_token');
+      const SOCKET_URL = await fetchSocketURL();
       
-      newSocket = io(getSocketURL(), {
+      newSocket = io(SOCKET_URL, {
         auth: { token },
         reconnection: true,
       });

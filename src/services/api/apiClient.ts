@@ -1,11 +1,8 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getBaseURL } from './config';
-
-const API_URL = getBaseURL();
+import { getApiBaseURL } from '../../utils/serverConfig';
 
 const apiClient = axios.create({
-  baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -13,6 +10,11 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use(
   async config => {
+    // Dynamically set baseURL if not provided
+    if (!config.baseURL) {
+      config.baseURL = await getApiBaseURL();
+    }
+
     const token = await AsyncStorage.getItem('auth_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -31,14 +33,16 @@ apiClient.interceptors.response.use(
       try {
         const refreshToken = await AsyncStorage.getItem('refresh_token');
         if (refreshToken) {
+          const API_URL = await getApiBaseURL();
           const response = await axios.post(`${API_URL}/auth/refresh`, {
             refreshToken,
           });
-          const { token } = response.data.data;
-          await AsyncStorage.setItem('auth_token', token);
-          originalRequest.headers.Authorization = `Bearer ${token}`;
+          const { accessToken } = response.data?.data;
+          await AsyncStorage.setItem('auth_token', accessToken);
+          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
           return apiClient(originalRequest);
         }
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (refreshError) {
         await AsyncStorage.multiRemove(['auth_token', 'refresh_token']);
       }

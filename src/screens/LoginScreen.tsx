@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,10 +11,11 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
-import { Mail, Lock, Store, ChevronRight } from 'lucide-react-native';
+import { Mail, Lock, Store, ChevronRight, Server } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../theme';
 import { useLoginLogic } from '../hooks/useLoginLogic';
+import { SERVERS, getServerIP, setServerIP } from '../utils/serverConfig';
 
 const QuickLoginChip = React.memo(({ vendor, onLogin, setEmail }: any) => (
   <TouchableOpacity
@@ -30,6 +31,21 @@ const QuickLoginChip = React.memo(({ vendor, onLogin, setEmail }: any) => (
 ));
 
 const LoginScreen = () => {
+  const [selectedServer, setSelectedServer] = useState(SERVERS.PC);
+
+  useEffect(() => {
+    const loadServer = async () => {
+      const ip = await getServerIP();
+      setSelectedServer(ip);
+    };
+    loadServer();
+  }, []);
+
+  const handleServerChange = async (ip: string) => {
+    await setServerIP(ip);
+    setSelectedServer(ip);
+  };
+
   const {
     t,
     isRTL,
@@ -63,6 +79,28 @@ const LoginScreen = () => {
               </View>
               <Text style={styles.title}>{t('auth.login_title')}</Text>
               <Text style={styles.subtitle}>{t('auth.login_subtitle')}</Text>
+            </View>
+
+            {/* Server Selection */}
+            <View style={styles.serverContainer}>
+              <View style={[styles.serverHeader, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                <Server size={14} color={theme.colors.primary} />
+                <Text style={styles.serverTitle}>Target Server</Text>
+              </View>
+              <View style={[styles.serverOptions, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                <TouchableOpacity
+                  style={[styles.serverOption, selectedServer === SERVERS.PC && styles.serverOptionActive]}
+                  onPress={() => handleServerChange(SERVERS.PC)}
+                >
+                  <Text style={[styles.serverOptionText, selectedServer === SERVERS.PC && styles.serverOptionTextActive]}>PC</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.serverOption, selectedServer === SERVERS.LAPTOP && styles.serverOptionActive]}
+                  onPress={() => handleServerChange(SERVERS.LAPTOP)}
+                >
+                  <Text style={[styles.serverOptionText, selectedServer === SERVERS.LAPTOP && styles.serverOptionTextActive]}>Laptop</Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
             <View style={styles.form}>
@@ -195,6 +233,50 @@ const styles = StyleSheet.create({
     color: theme.colors.textLight,
     marginTop: 8,
     textAlign: 'center',
+  },
+  serverContainer: {
+    backgroundColor: theme.colors.background,
+    padding: 12,
+    borderRadius: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  serverHeader: {
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 6,
+  },
+  serverTitle: {
+    fontSize: 12,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.primary,
+    textTransform: 'uppercase',
+  },
+  serverOptions: {
+    gap: 8,
+  },
+  serverOption: {
+    flex: 1,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: theme.colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  serverOptionActive: {
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
+  },
+  serverOptionText: {
+    fontSize: 13,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.textLight,
+  },
+  serverOptionTextActive: {
+    color: theme.colors.white,
   },
   form: { width: '100%' },
   inputLabelContainer: { width: '100%', marginBottom: 8, paddingHorizontal: 4 },

@@ -4,6 +4,7 @@ import { ShopStatus } from '@city-market/shared';
 import { useOrders } from './useOrders';
 import { useVendorProfile } from './useVendorProfile';
 import { useProducts } from './useProducts';
+import { useEarnings } from './useEarnings';
 import { theme } from '../theme';
 
 export const useDashboard = () => {
@@ -18,12 +19,13 @@ export const useDashboard = () => {
 
   const { orders } = useOrders();
   const { products } = useProducts();
+  const { pendingData, isLoading: earningsLoading } = useEarnings();
 
-  const activeOrdersCount = useMemo(() => 
+  const activeOrdersCount = useMemo(() =>
     orders?.filter(o => o.status !== 'DELIVERED' && o.status !== 'CANCELLED').length || 0
-  , [orders]);
+    , [orders]);
 
-  const todaySales = useMemo(() => 
+  const todaySales = useMemo(() =>
     orders
       ?.filter(o => {
         const today = new Date().toDateString();
@@ -32,46 +34,36 @@ export const useDashboard = () => {
           o.status !== 'CANCELLED'
         );
       })
-      .reduce((acc, o) => acc + o.totalAmount, 0) || 0
-  , [orders]);
+      .reduce((acc, o) => acc + (o.totalAmount || 0), 0) || 0
+    , [orders]);
 
-  const totalRevenue = useMemo(() => 
-    orders
-      ?.filter(o => o.status !== 'CANCELLED')
-      .reduce((acc, o) => acc + o.totalAmount, 0) || 0
-  , [orders]);
-
-  const platformCommission = useMemo(() => 
-    totalRevenue * ((profile?.commissionRate || 10) / 100)
-  , [totalRevenue, profile?.commissionRate]);
-
-  const netEarnings = useMemo(() => 
-    totalRevenue - platformCommission
-  , [totalRevenue, platformCommission]);
+  const totalRevenue = pendingData?.totalRevenue || 0;
+  const platformCommission = pendingData?.totalCommission || 0;
+  const netEarnings = pendingData?.netPayout || 0;
 
   const isOpen = profile?.status === ShopStatus.OPEN;
   const isSuspended = profile?.status === ShopStatus.SUSPENDED;
-  
-  const statusLabel = useMemo(() => 
-    isOpen 
-      ? t('dashboard.open') 
-      : isSuspended 
-        ? t('dashboard.suspended') 
-        : t('dashboard.closed')
-  , [isOpen, isSuspended, t]);
 
-  const statusColor = useMemo(() => 
-    isOpen 
-      ? theme.colors.success 
-      : isSuspended 
-        ? theme.colors.warning 
+  const statusLabel = useMemo(() =>
+    isOpen
+      ? t('dashboard.open')
+      : isSuspended
+        ? t('dashboard.suspended')
+        : t('dashboard.closed')
+    , [isOpen, isSuspended, t]);
+
+  const statusColor = useMemo(() =>
+    isOpen
+      ? theme.colors.success
+      : isSuspended
+        ? theme.colors.warning
         : theme.colors.error
-  , [isOpen, isSuspended]);
+    , [isOpen, isSuspended]);
 
   return {
     t,
     profile,
-    profileLoading,
+    profileLoading: profileLoading || earningsLoading,
     toggleStatus,
     isUpdatingStatus,
     activeOrdersCount,

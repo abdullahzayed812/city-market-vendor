@@ -151,7 +151,7 @@ const DashboardScreen = () => {
           />
           <StatCard
             icon={TrendingUp}
-            label={`${t('dashboard.platform_commission')} (${profile?.commissionRate || 10}%)`}
+            label={`${t('dashboard.platform_commission')} (${totalRevenue > 0 ? ((platformCommission / totalRevenue) * 100).toFixed(1) : 0}%)`}
             value={`-${t('common.currency')} ${platformCommission.toFixed(2)}`}
             color={theme.colors.error}
           />

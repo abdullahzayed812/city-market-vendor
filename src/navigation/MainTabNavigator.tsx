@@ -6,6 +6,7 @@ import {
   ShoppingBag,
   Package,
   User,
+  Wallet,
 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import DashboardScreen from '../screens/DashboardScreen';
@@ -14,6 +15,7 @@ import OrderDetailsScreen from '../screens/OrderDetailsScreen';
 import ProductsScreen from '../screens/ProductsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import ReviewsScreen from '../screens/ReviewsScreen';
+import EarningsScreen from '../screens/EarningsScreen';
 import { theme } from '../theme';
 
 const Tab = createBottomTabNavigator();
@@ -76,6 +78,16 @@ const MainTabNavigator = () => {
           title: t('products.title'),
           tabBarIcon: ({ color, size }) => (
             <Package size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="EarningsTab"
+        component={EarningsScreen}
+        options={{
+          title: t('common.earnings', 'Earnings'),
+          tabBarIcon: ({ color, size }) => (
+            <Wallet size={size} color={color} />
           ),
         }}
       />

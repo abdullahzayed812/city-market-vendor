@@ -165,5 +165,14 @@
       "kg": "كجم",
       "gram": "جرام"
     }
+  },
+  "financial": {
+    "earnings_and_settlements": "الأرباح والتسويات",
+    "track_payouts_subtitle": "تتبع مدفوعاتك والرصيد المعلق",
+    "unsettled_orders": "طلبات غير مسواة",
+    "net_payout": "صافي الدفع",
+    "settlement_history": "سجل التسويات",
+    "no_settlement_history": "لم يتم العثور على سجل تسويات.",
+    "orders_count": "{{count}} طلبات"
   }
 }
