@@ -16,11 +16,14 @@ import {
   Settings,
   ShieldCheck,
   Star,
+  MapPin,
 } from 'lucide-react-native';
 import { theme } from '../theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomHeader from '../components/common/CustomHeader';
 import { useProfileLogic } from '../hooks/useProfileLogic';
+import StoreMapPickerModal from '../components/StoreMapPickerModal';
+import { ActivityIndicator } from 'react-native';
 
 const ProfileItem = React.memo(({
   icon: Icon,
@@ -57,6 +60,8 @@ const ProfileItem = React.memo(({
   );
 });
 
+export const GOOGLE_MAPS_API_KEY = 'YOUR_GOOGLE_MAPS_API_KEY';
+
 const ProfileScreen = () => {
   const {
     t,
@@ -66,6 +71,10 @@ const ProfileScreen = () => {
     user,
     toggleLanguage,
     navigateToReviews,
+    mapVisible,
+    setMapVisible,
+    updateStoreLocation,
+    isUpdating,
   } = useProfileLogic();
 
   return (
@@ -116,15 +125,23 @@ const ProfileScreen = () => {
               icon={Clock}
               label={t('profile.working_hours')}
               value="09:00 - 21:00"
-              onPress={() => {}}
+              onPress={() => { }}
             />
             <ProfileItem
               icon={Globe}
               label={t('profile.language')}
               value={isRTL ? t('profile.arabic') : t('profile.english')}
               onPress={toggleLanguage}
-              isLast={true}
               color={theme.colors.info}
+              isRTL={isRTL}
+            />
+            <ProfileItem
+              icon={MapPin}
+              label={t('profile.store_location') || 'Store Location'}
+              value={isUpdating ? <ActivityIndicator size="small" /> : vendor?.address}
+              onPress={() => setMapVisible(true)}
+              isLast={true}
+              color={theme.colors.warning}
               isRTL={isRTL}
             />
           </View>
@@ -139,12 +156,12 @@ const ProfileScreen = () => {
               icon={Settings}
               label={t('profile.push_notifications')}
               value={t('dashboard.open')}
-              onPress={() => {}}
+              onPress={() => { }}
             />
             <ProfileItem
               icon={ShieldCheck}
               label={t('profile.security_privacy')}
-              onPress={() => {}}
+              onPress={() => { }}
               isLast={true}
               color={theme.colors.success}
             />
@@ -160,6 +177,14 @@ const ProfileScreen = () => {
           {t('profile.version', { version: '1.2.0 (Build 45)' })}
         </Text>
       </ScrollView>
+
+      <StoreMapPickerModal
+        visible={mapVisible}
+        onClose={() => setMapVisible(false)}
+        onConfirm={updateStoreLocation}
+        googleApiKey={GOOGLE_MAPS_API_KEY}
+        initialLocation={vendor?.latitude ? { latitude: vendor.latitude, longitude: vendor.longitude } : undefined}
+      />
     </SafeAreaView>
   );
 };

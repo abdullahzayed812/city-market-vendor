@@ -17,7 +17,8 @@
     "select_action": "Select Action",
     "today": "today",
     "vs_avg": "vs avg",
-    "currency": "EGP"
+    "currency": "EGP",
+    "earnings": "Earnings"
   },
   "auth": {
     "login_title": "Vendor Login",

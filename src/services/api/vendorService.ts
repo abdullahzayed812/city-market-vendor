@@ -10,4 +10,8 @@ export const VendorService = {
     const response = await apiClient.patch<ApiResponse<null>>(`/vendors/${id}/status`, { status });
     return response.data?.data;
   },
+  updateProfile: async (id: string, data: any) => {
+    const response = await apiClient.patch<ApiResponse<null>>(`/vendors/${id}`, data);
+    return response.data?.data;
+  },
 };

@@ -17,7 +17,8 @@
     "select_action": "اختر إجراءً",
     "today": "اليوم",
     "vs_avg": "مقارنة بالمتوسط",
-    "currency": "ج.م"
+    "currency": "ج.م",
+    "earnings": "الإرباح"
   },
   "auth": {
     "login_title": "دخول التجار",
