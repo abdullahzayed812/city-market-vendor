@@ -6,7 +6,7 @@ import { useAuth } from '../app/AuthContext';
 import Toast from 'react-native-toast-message';
 import { useTranslation } from 'react-i18next';
 
-export const useProducts = () => {
+export const useProducts = (globalProductSearch?: string) => {
   const queryClient = useQueryClient();
   const { socket } = useSocket();
   const { t } = useTranslation();
@@ -42,6 +42,41 @@ export const useProducts = () => {
     queryKey: ['vendorCategories', vendorId],
     queryFn: () => ProductService.getVendorCategories(vendorId!),
     enabled: !!vendorId,
+  });
+
+  const {
+    data: globalCategoriesData,
+    isLoading: globalCategoriesLoading,
+  } = useQuery({
+    queryKey: ['globalCategories'],
+    queryFn: () => ProductService.getGlobalCategories(),
+  });
+
+  const {
+    data: globalProductsData,
+    isLoading: globalProductsLoading,
+  } = useQuery({
+    queryKey: ['globalProducts', globalProductSearch],
+    queryFn: () => ProductService.getGlobalProducts(1, 100, globalProductSearch),
+  });
+
+  const createProductMutation = useMutation({
+    mutationFn: (data: any) => ProductService.createVendorProduct({ ...data, vendorId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['vendorProducts', vendorId] });
+      Toast.show({
+        type: 'success',
+        text1: t('common.save'),
+        text2: t('inventory.product_created', 'Product created successfully'),
+      });
+    },
+    onError: (error: any) => {
+      Toast.show({
+        type: 'error',
+        text1: t('common.error'),
+        text2: error.message || 'Failed to create product',
+      });
+    },
   });
 
   const updateStockMutation = useMutation({
@@ -102,18 +137,25 @@ export const useProducts = () => {
 
   const products = useMemo(() => productsData?.pages.flatMap(page => page?.data || []) || [], [productsData]);
   const categories = useMemo(() => categoriesData || [], [categoriesData]);
+  const globalCategories = useMemo(() => globalCategoriesData || [], [globalCategoriesData]);
+  const globalProducts = useMemo(() => globalProductsData?.data || [], [globalProductsData]);
 
-  const isLoading = productsLoading || categoriesLoading;
+  const isLoading = productsLoading || categoriesLoading || globalCategoriesLoading;
   const error = productsError || categoriesError;
 
   return {
     products,
     categories,
+    globalCategories,
+    globalProducts,
     isLoading,
+    isGlobalProductsLoading: globalProductsLoading,
     error,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    createProduct: createProductMutation.mutate,
+    isCreatingProduct: createProductMutation.isPending,
     updateStock: updateStockMutation.mutate,
     isUpdatingStock: updateStockMutation.isPending,
     updatePrice: updatePriceMutation.mutate,

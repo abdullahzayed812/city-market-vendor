@@ -86,17 +86,28 @@
     "original_qty": "Original Qty",
     "new_qty": "New Qty",
     "requested_weight": "Requested Weight",
-    "new_weight": "New Weight"
+    "new_weight": "New Weight",
+    "send_proposal": "Send Proposal"
   },
   "products": {
     "title": "Products",
     "add_new": "Add Product",
+    "add_product": "Add New Product",
+    "create_product": "Create Product",
     "edit": "Edit Product",
     "name": "Product Name",
     "price": "Price",
+    "price_per_kg": "Price per kg",
     "stock": "Stock",
+    "stock_grams": "Stock (Grams)",
     "category": "Category",
+    "store_category": "Store Category",
+    "select_store_category": "Select store category",
+    "link_to_global": "Link to Global Catalog",
+    "select_existing": "Select existing product",
+    "description": "Description",
     "quantity": "Quantity",
+    "unit": "Unit",
     "no_products": "No products found"
   },
   "profile": {
@@ -160,8 +171,10 @@
     "update_price": "Update Price",
     "new_price": "New Price",
     "price_updated": "Price updated successfully",
+    "product_created": "Product created successfully",
     "unit": "Unit",
     "weight": "Weight",
+    "low_stock": "Low Stock",
     "units": {
       "kg": "kg",
       "gram": "g"

@@ -38,4 +38,24 @@ export const ProductService = {
     );
     return response.data?.data;
   },
+  createVendorProduct: async (data: any) => {
+    const response = await apiClient.post<ApiResponse<VendorProduct>>(
+      '/catalog/products',
+      data,
+    );
+    return response.data?.data;
+  },
+  getGlobalCategories: async () => {
+    const response = await apiClient.get<ApiResponse<Category[]>>(
+      '/catalog/categories/global',
+    );
+    return response.data?.data;
+  },
+  getGlobalProducts: async (page: number = 1, limit: number = 100, search?: string) => {
+    const response = await apiClient.get<ApiResponse<{ data: any[]; total: number }>>(
+      '/catalog/global-products',
+      { params: { page, limit, search } }
+    );
+    return response.data?.data;
+  },
 };

@@ -1,10 +1,22 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useProducts } from './useProducts';
 import { VendorProduct } from '@city-market/shared';
 
 export const useProductsLogic = () => {
   const { t } = useTranslation();
+  const [globalSearchStr, setGlobalSearchStr] = useState('');
+  const [debouncedGlobalSearch, setDebouncedGlobalSearch] = useState('');
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (globalSearchStr.length === 0 || globalSearchStr.length >= 3) {
+        setDebouncedGlobalSearch(globalSearchStr);
+      }
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [globalSearchStr]);
+
   const {
     products,
     isLoading,
@@ -13,14 +25,20 @@ export const useProductsLogic = () => {
     updatePrice,
     isUpdatingPrice,
     categories,
+    globalCategories,
+    globalProducts,
+    createProduct,
+    isCreatingProduct,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useProducts();
+    isGlobalProductsLoading,
+  } = useProducts(debouncedGlobalSearch);
 
   const [stockModalVisible, setStockModalVisible] = useState(false);
   const [priceModalVisible, setPriceModalVisible] = useState(false);
   const [optionsModalVisible, setOptionsModalVisible] = useState(false);
+  const [addProductModalVisible, setAddProductModalVisible] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<VendorProduct | null>(null);
 
   const sections = useMemo(() => {
@@ -49,6 +67,11 @@ export const useProductsLogic = () => {
     setPriceModalVisible(false);
   }, [updatePrice]);
 
+  const handleAddProduct = useCallback(async (data: any) => {
+    await createProduct(data);
+    setAddProductModalVisible(false);
+  }, [createProduct]);
+
   const openOptions = useCallback((product: VendorProduct) => {
     setSelectedProduct(product);
     setOptionsModalVisible(true);
@@ -64,9 +87,16 @@ export const useProductsLogic = () => {
     setPriceModalVisible(true);
   }, []);
 
+  const openAddProductModal = useCallback(() => {
+    setAddProductModalVisible(true);
+  }, []);
+
   return {
     t,
     products,
+    categories,
+    globalCategories,
+    globalProducts,
     isLoading,
     sections,
     stockModalVisible,
@@ -75,16 +105,23 @@ export const useProductsLogic = () => {
     setPriceModalVisible,
     optionsModalVisible,
     setOptionsModalVisible,
+    addProductModalVisible,
+    setAddProductModalVisible,
     selectedProduct,
     handleUpdateStock,
     isUpdatingStock,
     handleUpdatePrice,
     isUpdatingPrice,
+    handleAddProduct,
+    isCreatingProduct,
     openOptions,
     openStockModal,
     openPriceModal,
+    openAddProductModal,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    setGlobalSearchStr,
+    isGlobalProductsLoading,
   };
 };

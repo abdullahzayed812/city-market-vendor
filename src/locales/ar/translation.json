@@ -86,17 +86,28 @@
     "original_qty": "الكمية الأصلية",
     "new_qty": "الكمية الجديدة",
     "requested_weight": "الوزن المطلوب",
-    "new_weight": "الوزن الجديد"
+    "new_weight": "الوزن الجديد",
+    "send_proposal": "إرسال الإقتراح"
   },
   "products": {
     "title": "المنتجات",
     "add_new": "إضافة منتج",
+    "add_product": "إضافة منتج جديد",
+    "create_product": "إنشاء المنتج",
     "edit": "تعديل المنتج",
     "name": "اسم المنتج",
     "price": "السعر",
+    "price_per_kg": "السعر للكيلو",
     "stock": "المخزون",
+    "stock_grams": "المخزون (بالجرام)",
     "category": "التصنيف",
+    "store_category": "تصنيف المتجر",
+    "select_store_category": "اختر تصنيف المتجر",
+    "link_to_global": "ربط بكتالوج المنتجات العام",
+    "select_existing": "اختر منتجاً حالياً",
+    "description": "الوصف",
     "quantity": "الكمية",
+    "unit": "وحدة",
     "no_products": "لم يتم العثور على منتجات"
   },
   "profile": {
@@ -160,6 +171,7 @@
     "update_price": "تحديث السعر",
     "new_price": "السعر الجديد",
     "price_updated": "تم تحديث السعر بنجاح",
+    "product_created": "تم إنشاء المنتج بنجاح",
     "unit": "وحدة",
     "weight": "وزن",
     "units": {

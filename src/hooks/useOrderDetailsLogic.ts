@@ -72,6 +72,7 @@ export const useOrderDetailsLogic = (orderId: string) => {
             itemId: item.id,
             type: ProposalType.QUANTITY_REDUCTION,
             proposedQuantity: data.newQuantity,
+            actualQuantity: item.quantity,
           });
         }
       } else if (item.requestedWeightGrams && data.newWeightKg) {
