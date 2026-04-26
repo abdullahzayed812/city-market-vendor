@@ -1,6 +1,10 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import i18n from '../../locales/i18n';
 import { getApiBaseURL } from '../../utils/serverConfig';
+
+let signOutCallback: (() => void) | null = null;
+export const setSignOutCallback = (fn: () => void) => { signOutCallback = fn; };
 
 const apiClient = axios.create({
   headers: {
@@ -16,12 +20,18 @@ apiClient.interceptors.request.use(
     }
 
     const token = await AsyncStorage.getItem('auth_token');
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    config.headers['Accept-Language'] = i18n.language || 'ar';
+
     return config;
   },
-  error => Promise.reject(error),
+  error => {
+    return Promise.reject(error);
+  },
 );
 
 apiClient.interceptors.response.use(
@@ -37,14 +47,16 @@ apiClient.interceptors.response.use(
           const response = await axios.post(`${API_URL}/auth/refresh`, {
             refreshToken,
           });
-          const { accessToken } = response.data?.data;
+          const { accessToken, refreshToken: newRefreshToken } = response.data?.data;
           await AsyncStorage.setItem('auth_token', accessToken);
+          await AsyncStorage.setItem('refresh_token', newRefreshToken);
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
           return apiClient(originalRequest);
         }
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        signOutCallback?.();
       } catch (refreshError) {
         await AsyncStorage.multiRemove(['auth_token', 'refresh_token']);
+        signOutCallback?.();
       }
     }
     return Promise.reject(error);

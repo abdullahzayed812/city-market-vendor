@@ -188,5 +188,51 @@
     "settlement_history": "Settlement History",
     "no_settlement_history": "No settlement history found.",
     "orders_count": "{{count}} Orders"
+  },
+  "terms": {
+    "title": "Terms and Conditions",
+    "lastUpdated": "Last updated: April 2025",
+    "intro": "Welcome to CityMarket Vendor. By using this app, you agree to the following terms and conditions governing your participation as a vendor partner. Please read them carefully.",
+    "sections": [
+      {
+        "heading": "Acceptance of Terms",
+        "body": "By accessing and using the CityMarket Vendor app, you accept and agree to be bound by these Terms and Conditions. If you do not agree, please do not use the app."
+      },
+      {
+        "heading": "Vendor Eligibility",
+        "body": "You must be a legally registered business entity or authorized representative. You are responsible for ensuring your business complies with all applicable local laws, regulations, and health and safety standards."
+      },
+      {
+        "heading": "Product Listings",
+        "body": "You are responsible for the accuracy of all product information, pricing, and availability listed on CityMarket. Misleading, prohibited, or counterfeit products are strictly not allowed and may result in immediate account termination."
+      },
+      {
+        "heading": "Order Management",
+        "body": "You agree to confirm, prepare, and dispatch orders in a timely manner. Failure to fulfill confirmed orders without valid reason may affect your vendor rating and standing on the platform."
+      },
+      {
+        "heading": "Fees and Commissions",
+        "body": "CityMarket charges a commission on each completed order as detailed in your vendor agreement. Rates may be updated with prior written notice. All payments are subject to applicable taxes."
+      },
+      {
+        "heading": "Quality Standards",
+        "body": "You must ensure all products are fresh, properly packaged, and meet the quality standards expected by customers. CityMarket reserves the right to investigate customer complaints and take appropriate action."
+      },
+      {
+        "heading": "Data and Privacy",
+        "body": "Your business information and order data may be used for platform operations, analytics, and improvement. We protect your data in accordance with our Privacy Policy and applicable data protection laws."
+      },
+      {
+        "heading": "Changes to Terms",
+        "body": "CityMarket reserves the right to update these Terms and Conditions. You will be notified of major changes, and continued use of the app constitutes acceptance of the revised terms."
+      }
+    ],
+    "closing": "By tapping \"Accept & Continue\", you confirm that you have read, understood, and agree to these Terms and Conditions.",
+    "accept": "Accept & Continue",
+    "decline": "Decline",
+    "declineTitle": "Decline Terms",
+    "declineMessage": "You must accept the Terms and Conditions to use CityMarket Vendor. If you decline, the app will close.",
+    "exitApp": "Exit App",
+    "scrollHint": "Please scroll down to read all terms before accepting"
   }
 }

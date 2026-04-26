@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { VendorService } from '../services/api/vendorService';
+import { setSignOutCallback } from '../services/api/apiClient';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -24,6 +25,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<any | null>(null);
   const [vendor, setVendor] = useState<any | null>(null);
   const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSignOutCallback(() => {
+      setToken(null);
+      setUser(null);
+      setVendor(null);
+      setIsAuthenticated(false);
+    });
+  }, []);
 
   useEffect(() => {
     checkAuth();

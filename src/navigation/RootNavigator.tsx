@@ -8,18 +8,37 @@ import LoginScreen from '../screens/LoginScreen';
 import MainTabNavigator from './MainTabNavigator';
 import { ActivityIndicator, View } from 'react-native';
 import { theme } from '../theme';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import TermsAndConditionsScreen from '../screens/TermsAndConditionsScreen';
 
 const Stack = createNativeStackNavigator();
+const TERMS_ACCEPTED_KEY = '@citymarket_vendor_terms_accepted';
 
 const RootNavigator = () => {
   const { isAuthenticated, isLoading } = useAuth();
+  const [termsAccepted, setTermsAccepted] = React.useState<boolean | null>(null);
 
-  if (isLoading) {
+  React.useEffect(() => {
+    AsyncStorage.getItem(TERMS_ACCEPTED_KEY).then(value => {
+      setTermsAccepted(value === 'true');
+    });
+  }, []);
+
+  const handleAcceptTerms = async () => {
+    await AsyncStorage.setItem(TERMS_ACCEPTED_KEY, 'true');
+    setTermsAccepted(true);
+  };
+
+  if (isLoading || termsAccepted === null) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color={theme.colors.primary} />
       </View>
     );
+  }
+
+  if (!termsAccepted) {
+    return <TermsAndConditionsScreen onAccept={handleAcceptTerms} />;
   }
 
   return (
