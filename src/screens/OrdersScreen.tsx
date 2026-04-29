@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -13,9 +13,20 @@ import { theme } from '../theme';
 import CustomHeader from '../components/common/CustomHeader';
 import { useOrdersLogic } from '../hooks/useOrdersLogic';
 
-const OrderItem = React.memo(({ item, getStatusConfig, t, navigation, isRTL }: any) => {
+const formatCountdown = (ms: number): string => {
+  const total = Math.max(0, ms);
+  const m = Math.floor(total / 60000);
+  const s = Math.floor((total % 60000) / 1000);
+  return `${m}:${s.toString().padStart(2, '0')}`;
+};
+
+const OrderItem = React.memo(({ item, getStatusConfig, t, navigation, isRTL, now }: any) => {
   const status = getStatusConfig(item.status);
-  
+  const remaining = item.confirmationExpiry
+    ? Math.max(0, new Date(item.confirmationExpiry).getTime() - now)
+    : 0;
+  const isInWindow = remaining > 0;
+
   return (
     <TouchableOpacity
       style={styles.orderCard}
@@ -44,6 +55,15 @@ const OrderItem = React.memo(({ item, getStatusConfig, t, navigation, isRTL }: a
         </View>
       </View>
 
+      {isInWindow && (
+        <View style={styles.countdownBanner}>
+          <Clock size={13} color="#f59e0b" />
+          <Text style={styles.countdownText}>
+            {t('orders.awaiting_confirmation')} {formatCountdown(remaining)}
+          </Text>
+        </View>
+      )}
+
       <View style={styles.divider} />
 
       <View style={styles.orderDetails}>
@@ -53,7 +73,10 @@ const OrderItem = React.memo(({ item, getStatusConfig, t, navigation, isRTL }: a
             {item.items?.length || 0} {t('products.title')}
           </Text>
         </View>
-        <Text style={styles.totalAmount}>{t('common.currency')} {item.totalAmount?.toFixed(2)}</Text>
+        <View>
+          <Text style={styles.totalLabel}>{t('orders.total_price')}</Text>
+          <Text style={styles.totalAmount}>{t('common.currency')} {item.totalAmount?.toFixed(2)}</Text>
+        </View>
       </View>
 
       <View style={styles.cardFooter}>
@@ -69,13 +92,24 @@ const OrderItem = React.memo(({ item, getStatusConfig, t, navigation, isRTL }: a
 });
 
 const OrdersScreen = ({ navigation }: any) => {
-  const { 
-    t, 
-    isRTL, 
-    orders, 
-    isLoading, 
-    getStatusConfig 
+  const {
+    t,
+    isRTL,
+    orders,
+    isLoading,
+    getStatusConfig,
   } = useOrdersLogic();
+
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const hasWindow = (orders || []).some(
+      (o: any) => o.confirmationExpiry && new Date(o.confirmationExpiry).getTime() > Date.now(),
+    );
+    if (!hasWindow) return;
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, [orders]);
 
   if (isLoading) {
     return (
@@ -91,12 +125,13 @@ const OrdersScreen = ({ navigation }: any) => {
       <FlatList
         data={orders}
         renderItem={({ item }) => (
-          <OrderItem 
-            item={item} 
-            getStatusConfig={getStatusConfig} 
-            t={t} 
-            navigation={navigation} 
-            isRTL={isRTL} 
+          <OrderItem
+            item={item}
+            getStatusConfig={getStatusConfig}
+            t={t}
+            navigation={navigation}
+            isRTL={isRTL}
+            now={now}
           />
         )}
         keyExtractor={item => item.id}
@@ -153,6 +188,21 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.sm,
   },
   statusText: { fontSize: 12, fontWeight: theme.typography.weights.bold, textTransform: 'capitalize' },
+  countdownBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fef3c7',
+    borderRadius: theme.radius.md,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: 12,
+    gap: 6,
+  },
+  countdownText: {
+    fontSize: 12,
+    fontWeight: theme.typography.weights.semibold,
+    color: '#b45309',
+  },
   divider: { height: 1, backgroundColor: theme.colors.border, marginBottom: 16, opacity: 0.5 },
   orderDetails: {
     flexDirection: 'row',
@@ -162,10 +212,16 @@ const styles = StyleSheet.create({
   },
   detailItem: { flexDirection: 'row', alignItems: 'center' },
   detailText: { fontSize: 14, color: theme.colors.textMuted, marginStart: 8 },
+  totalLabel: {
+    fontSize: 11,
+    color: theme.colors.textMuted,
+    textAlign: 'right',
+  },
   totalAmount: {
     fontSize: 18,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.success,
+    textAlign: 'right',
   },
   cardFooter: {
     flexDirection: 'row',

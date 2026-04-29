@@ -53,6 +53,7 @@
     "title": "الطلبات",
     "status": "حالة الطلب",
     "details": "تفاصيل الطلب",
+    "status_draft": "مسودة",
     "status_pending": "قيد الانتظار",
     "status_confirmed": "مؤكد",
     "status_ready": "جاهز",
@@ -87,7 +88,9 @@
     "new_qty": "الكمية الجديدة",
     "requested_weight": "الوزن المطلوب",
     "new_weight": "الوزن الجديد",
-    "send_proposal": "إرسال الإقتراح"
+    "send_proposal": "إرسال الإقتراح",
+    "total_price": "السعر الإجمالي",
+    "awaiting_confirmation": "في انتظار تأكيد العميل"
   },
   "products": {
     "title": "المنتجات",

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import {
   X,
   Trash2,
   Send,
+  Clock,
 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../theme';
@@ -236,6 +237,13 @@ const ProposalModal = React.memo(({
   </Modal>
 ));
 
+const formatCountdown = (ms: number): string => {
+  const total = Math.max(0, ms);
+  const m = Math.floor(total / 60000);
+  const s = Math.floor((total % 60000) / 1000);
+  return `${m}:${s.toString().padStart(2, '0')}`;
+};
+
 const OrderDetailsScreen = ({ route }: any) => {
   const { orderId } = route.params;
   const {
@@ -254,6 +262,21 @@ const OrderDetailsScreen = ({ route }: any) => {
     isProcessing,
   } = useOrderDetailsLogic(orderId);
 
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!order?.confirmationExpiry) return;
+    const expiry = new Date(order.confirmationExpiry).getTime();
+    if (expiry <= Date.now()) return;
+    const interval = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(interval);
+  }, [order?.confirmationExpiry]);
+
+  const confirmationRemaining = order?.confirmationExpiry
+    ? Math.max(0, new Date(order.confirmationExpiry).getTime() - now)
+    : 0;
+  const isInConfirmationWindow = confirmationRemaining > 0;
+
   if (isLoading) {
     return (
       <View style={styles.centered}>
@@ -269,14 +292,35 @@ const OrderDetailsScreen = ({ route }: any) => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <StatusCard t={t} order={order} />
 
+        {isInConfirmationWindow && (
+          <View style={styles.countdownBanner}>
+            <Clock size={18} color="#b45309" />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.countdownTitle}>{t('orders.awaiting_confirmation')}</Text>
+              <Text style={styles.countdownTimer}>{formatCountdown(confirmationRemaining)}</Text>
+            </View>
+          </View>
+        )}
+
         <Text style={styles.sectionTitle}>{t('orders.order_items')}</Text>
         {order?.items.map((item: any) => (
           <OrderItem key={item.id} t={t} item={item} />
         ))}
+
+        {order && (
+          <View style={styles.priceSummaryCard}>
+            <View style={styles.priceRow}>
+              <Text style={styles.priceTotalLabel}>{t('orders.total_price')}</Text>
+              <Text style={styles.priceTotalValue}>
+                {(order.totalAmount ?? 0).toFixed(2)} {t('common.currency')}
+              </Text>
+            </View>
+          </View>
+        )}
       </ScrollView>
 
       <View style={styles.footerActions}>
-        {canAccept ? (
+        {isInConfirmationWindow ? null : canAccept ? (
           <View style={styles.footerButtonsRow}>
             <TouchableOpacity
               style={[
@@ -414,6 +458,51 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.full,
   },
   badgeText: { fontSize: 12, fontWeight: '700', color: theme.colors.primary },
+  countdownBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fef3c7',
+    borderRadius: theme.radius.lg,
+    padding: 14,
+    marginBottom: 16,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: '#fcd34d',
+  },
+  countdownTitle: {
+    fontSize: 12,
+    color: '#92400e',
+    fontWeight: theme.typography.weights.semibold,
+    marginBottom: 2,
+  },
+  countdownTimer: {
+    fontSize: 22,
+    fontWeight: theme.typography.weights.bold,
+    color: '#b45309',
+    fontVariant: ['tabular-nums'],
+  },
+  priceSummaryCard: {
+    backgroundColor: theme.colors.surface,
+    padding: theme.spacing.lg,
+    borderRadius: theme.radius.xl,
+    marginTop: 8,
+    ...theme.shadows.card,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  priceTotalLabel: {
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.secondary,
+  },
+  priceTotalValue: {
+    fontSize: 16,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.success,
+  },
   footerActions: {
     padding: theme.spacing.md,
     backgroundColor: theme.colors.white,

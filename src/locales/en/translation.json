@@ -53,6 +53,7 @@
     "title": "Orders",
     "status": "Order Status",
     "details": "Order Details",
+    "status_draft": "Draft",
     "status_pending": "Pending",
     "status_confirmed": "Confirmed",
     "status_ready": "Ready",
@@ -87,7 +88,9 @@
     "new_qty": "New Qty",
     "requested_weight": "Requested Weight",
     "new_weight": "New Weight",
-    "send_proposal": "Send Proposal"
+    "send_proposal": "Send Proposal",
+    "total_price": "Total Price",
+    "awaiting_confirmation": "Awaiting customer confirmation"
   },
   "products": {
     "title": "Products",
