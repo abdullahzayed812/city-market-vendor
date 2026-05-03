@@ -90,7 +90,8 @@
     "new_weight": "New Weight",
     "send_proposal": "Send Proposal",
     "total_price": "Total Price",
-    "awaiting_confirmation": "Awaiting customer confirmation"
+    "awaiting_confirmation": "Awaiting customer confirmation",
+    "cancellation_reason": "Cancellation Reason"
   },
   "products": {
     "title": "Products",

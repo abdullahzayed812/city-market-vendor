@@ -19,6 +19,7 @@ import {
   Trash2,
   Send,
   Clock,
+  XCircle,
 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../theme';
@@ -292,6 +293,20 @@ const OrderDetailsScreen = ({ route }: any) => {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <StatusCard t={t} order={order} />
 
+        {order?.cancellationReason && (
+          <View style={styles.cancellationBanner}>
+            <XCircle size={18} color="#dc2626" />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.cancellationLabel}>
+                {t('orders.cancellation_reason')}
+              </Text>
+              <Text style={styles.cancellationText}>
+                {order.cancellationReason}
+              </Text>
+            </View>
+          </View>
+        )}
+
         {isInConfirmationWindow && (
           <View style={styles.countdownBanner}>
             <Clock size={18} color="#b45309" />
@@ -458,6 +473,27 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.full,
   },
   badgeText: { fontSize: 12, fontWeight: '700', color: theme.colors.primary },
+  cancellationBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#fef2f2',
+    borderRadius: theme.radius.lg,
+    padding: 14,
+    marginBottom: 16,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: '#fecaca',
+  },
+  cancellationLabel: {
+    fontSize: 12,
+    color: '#991b1b',
+    fontWeight: theme.typography.weights.semibold,
+    marginBottom: 2,
+  },
+  cancellationText: {
+    fontSize: 14,
+    color: '#dc2626',
+  },
   countdownBanner: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -90,7 +90,8 @@
     "new_weight": "الوزن الجديد",
     "send_proposal": "إرسال الإقتراح",
     "total_price": "السعر الإجمالي",
-    "awaiting_confirmation": "في انتظار تأكيد العميل"
+    "awaiting_confirmation": "في انتظار تأكيد العميل",
+    "cancellation_reason": "سبب الإلغاء"
   },
   "products": {
     "title": "المنتجات",
