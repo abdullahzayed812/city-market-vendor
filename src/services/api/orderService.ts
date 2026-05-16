@@ -10,11 +10,11 @@ import {
 } from '@city-market/shared';
 
 export const OrderService = {
-  getVendorOrders: async (vendorId: string) => {
+  getVendorOrders: async (vendorId: string, page: number) => {
     const response = await apiClient.get<
-      ApiResponse<VendorOrderWithItemsDto[]>
-    >(`/orders/vendor/${vendorId}`);
-    return response.data?.data;
+      ApiResponse<{ items: VendorOrderWithItemsDto[]; hasNextPage: boolean }>
+    >(`/orders/vendor/${vendorId}`, { params: { page, limit: 20 } });
+    return response.data.data!;
   },
   getOrderById: async (id: string) => {
     const response = await apiClient.get<

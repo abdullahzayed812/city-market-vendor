@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   TextInput,
   Modal,
   Switch,
+  RefreshControl,
 } from 'react-native';
 import {
   Check,
@@ -18,7 +19,6 @@ import {
   X,
   Trash2,
   Send,
-  Clock,
   XCircle,
 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -31,10 +31,7 @@ const StatusCard = React.memo(({ t, order }: any) => (
   <View style={styles.statusCard}>
     <Text style={styles.statusLabel}>{t('orders.status')}</Text>
     <View
-      style={[
-        styles.badge,
-        { backgroundColor: theme.colors.primary + '15' },
-      ]}
+      style={[styles.badge, { backgroundColor: theme.colors.primary + '15' }]}
     >
       <Text style={styles.badgeText}>
         {t(`orders.status_${order?.status.toLowerCase()}`)}
@@ -56,9 +53,7 @@ const OrderItem = React.memo(({ t, item }: any) => (
       <View style={styles.quantityContainer}>
         {item.quantity ? (
           <>
-            <Text style={styles.qtyLabel}>
-              {t('products.quantity')}:
-            </Text>
+            <Text style={styles.qtyLabel}>{t('products.quantity')}:</Text>
             <Text style={styles.qtyValue}>{item.quantity}</Text>
           </>
         ) : (
@@ -81,169 +76,167 @@ const OrderItem = React.memo(({ t, item }: any) => (
   </View>
 ));
 
-const ProposalModal = React.memo(({
-  visible,
-  onClose,
-  t,
-  order,
-  proposalData,
-  handleUpdateProposal,
-  onSubmit,
-  isProcessing,
-}: any) => (
-  <Modal
-    visible={visible}
-    transparent={true}
-    animationType="slide"
-    onRequestClose={onClose}
-  >
-    <View style={styles.modalOverlay}>
-      <View style={styles.modalContent}>
-        <View style={styles.modalHeader}>
-          <Text style={styles.modalTitle}>
-            {t('orders.propose_changes')}
-          </Text>
-          <TouchableOpacity onPress={onClose}>
-            <X size={24} color={theme.colors.text} />
-          </TouchableOpacity>
-        </View>
+const ProposalModal = React.memo(
+  ({
+    visible,
+    onClose,
+    t,
+    order,
+    proposalData,
+    handleUpdateProposal,
+    onSubmit,
+    isProcessing,
+  }: any) => (
+    <Modal
+      visible={visible}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>{t('orders.propose_changes')}</Text>
+            <TouchableOpacity onPress={onClose}>
+              <X size={24} color={theme.colors.text} />
+            </TouchableOpacity>
+          </View>
 
-        <ScrollView style={styles.modalBody}>
-          {order?.items.map((item: any) => {
-            const data = proposalData[item.id] || {
-              isUnavailable: false,
-              newQuantity: item.quantity,
-              newWeightKg: '0',
-            };
-            return (
-              <View key={item.id} style={styles.proposalItemRow}>
-                <View style={styles.proposalItemHeader}>
-                  <Text style={styles.proposalItemName} numberOfLines={1}>
-                    {item.productName}
-                  </Text>
-                  <View style={styles.unavailableToggle}>
-                    <Text style={styles.unavailableText}>
-                      {t('orders.mark_unavailable')}
+          <ScrollView style={styles.modalBody}>
+            {order?.items.map((item: any) => {
+              const data = proposalData[item.id] || {
+                isUnavailable: false,
+                newQuantity: item.quantity,
+                newWeightKg: '0',
+              };
+              return (
+                <View key={item.id} style={styles.proposalItemRow}>
+                  <View style={styles.proposalItemHeader}>
+                    <Text style={styles.proposalItemName} numberOfLines={1}>
+                      {item.productName}
                     </Text>
-                    <Switch
-                      value={data.isUnavailable}
-                      onValueChange={val =>
-                        handleUpdateProposal(item.id, {
-                          isUnavailable: val,
-                        })
-                      }
-                      trackColor={{ true: theme.colors.error }}
-                    />
+                    <View style={styles.unavailableToggle}>
+                      <Text style={styles.unavailableText}>
+                        {t('orders.mark_unavailable')}
+                      </Text>
+                      <Switch
+                        value={data.isUnavailable}
+                        onValueChange={val =>
+                          handleUpdateProposal(item.id, {
+                            isUnavailable: val,
+                          })
+                        }
+                        trackColor={{ true: theme.colors.error }}
+                      />
+                    </View>
                   </View>
-                </View>
 
-                {!data.isUnavailable && (
-                  <View style={styles.proposalInputArea}>
-                    {item.quantity ? (
-                      <View style={styles.qtyProposalContainer}>
-                        <Text style={styles.inputLabel}>
-                          {t('products.quantity')}:
-                        </Text>
-                        <View style={styles.qtyControls}>
-                          <TouchableOpacity
-                            onPress={() =>
-                              handleUpdateProposal(item.id, {
-                                newQuantity: Math.max(
-                                  0,
-                                  (data.newQuantity || 0) - 1,
-                                ),
-                              })
-                            }
-                            style={styles.qtyBtn}
-                          >
-                            <Minus size={16} color={theme.colors.primary} />
-                          </TouchableOpacity>
-                          <Text style={styles.qtyValue}>
-                            {data.newQuantity}
+                  {!data.isUnavailable && (
+                    <View style={styles.proposalInputArea}>
+                      {item.quantity ? (
+                        <View style={styles.qtyProposalContainer}>
+                          <Text style={styles.inputLabel}>
+                            {t('products.quantity')}:
                           </Text>
-                          <TouchableOpacity
-                            onPress={() =>
-                              handleUpdateProposal(item.id, {
-                                newQuantity: Math.min(
-                                  item.quantity,
-                                  (data.newQuantity || 0) + 1,
-                                ),
-                              })
-                            }
-                            style={styles.qtyBtn}
-                            disabled={data.newQuantity === item.quantity}
-                          >
-                            <Plus
-                              size={16}
-                              color={
-                                data.newQuantity === item.quantity
-                                  ? theme.colors.border
-                                  : theme.colors.primary
+                          <View style={styles.qtyControls}>
+                            <TouchableOpacity
+                              onPress={() =>
+                                handleUpdateProposal(item.id, {
+                                  newQuantity: Math.max(
+                                    0,
+                                    (data.newQuantity || 0) - 1,
+                                  ),
+                                })
+                              }
+                              style={styles.qtyBtn}
+                            >
+                              <Minus size={16} color={theme.colors.primary} />
+                            </TouchableOpacity>
+                            <Text style={styles.qtyValue}>
+                              {data.newQuantity}
+                            </Text>
+                            <TouchableOpacity
+                              onPress={() =>
+                                handleUpdateProposal(item.id, {
+                                  newQuantity: Math.min(
+                                    item.quantity,
+                                    (data.newQuantity || 0) + 1,
+                                  ),
+                                })
+                              }
+                              style={styles.qtyBtn}
+                              disabled={data.newQuantity === item.quantity}
+                            >
+                              <Plus
+                                size={16}
+                                color={
+                                  data.newQuantity === item.quantity
+                                    ? theme.colors.border
+                                    : theme.colors.primary
+                                }
+                              />
+                            </TouchableOpacity>
+                          </View>
+                          <Text style={styles.originalHint}>
+                            / {item.quantity}
+                          </Text>
+                        </View>
+                      ) : (
+                        <View style={styles.weightProposalContainer}>
+                          <Text style={styles.inputLabel}>
+                            {t('orders.actual_weight')}:
+                          </Text>
+                          <View style={styles.weightInputBox}>
+                            <TextInput
+                              style={styles.weightInput}
+                              keyboardType="numeric"
+                              value={data.newWeightKg}
+                              onChangeText={text =>
+                                handleUpdateProposal(item.id, {
+                                  newWeightKg: text,
+                                })
                               }
                             />
-                          </TouchableOpacity>
+                            <Text style={styles.weightUnit}>kg</Text>
+                          </View>
+                          <Text style={styles.originalHint}>
+                            (Req:{' '}
+                            {(item.requestedWeightGrams / 1000).toFixed(2)} kg)
+                          </Text>
                         </View>
-                        <Text style={styles.originalHint}>
-                          / {item.quantity}
-                        </Text>
-                      </View>
-                    ) : (
-                      <View style={styles.weightProposalContainer}>
-                        <Text style={styles.inputLabel}>
-                          {t('orders.actual_weight')}:
-                        </Text>
-                        <View style={styles.weightInputBox}>
-                          <TextInput
-                            style={styles.weightInput}
-                            keyboardType="numeric"
-                            value={data.newWeightKg}
-                            onChangeText={text =>
-                              handleUpdateProposal(item.id, {
-                                newWeightKg: text,
-                              })
-                            }
-                          />
-                          <Text style={styles.weightUnit}>kg</Text>
-                        </View>
-                        <Text style={styles.originalHint}>
-                          (Req:{' '}
-                          {(item.requestedWeightGrams / 1000).toFixed(2)}{' '}
-                          kg)
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                )}
-              </View>
-            );
-          })}
-        </ScrollView>
+                      )}
+                    </View>
+                  )}
+                </View>
+              );
+            })}
+          </ScrollView>
 
-        <TouchableOpacity
-          style={[styles.modalSubmitBtn, isProcessing && { opacity: 0.7 }]}
-          onPress={onSubmit}
-          disabled={isProcessing}
-        >
-          {isProcessing ? (
-            <ActivityIndicator color={theme.colors.white} />
-          ) : (
-            <>
-              <Send size={18} color={theme.colors.white} style={{ marginEnd: 10 }} />
-              <Text style={styles.modalSubmitText}>{t('orders.send_proposal')}</Text>
-            </>
-          )}
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.modalSubmitBtn, isProcessing && { opacity: 0.7 }]}
+            onPress={onSubmit}
+            disabled={isProcessing}
+          >
+            {isProcessing ? (
+              <ActivityIndicator color={theme.colors.white} />
+            ) : (
+              <>
+                <Send
+                  size={18}
+                  color={theme.colors.white}
+                  style={{ marginEnd: 10 }}
+                />
+                <Text style={styles.modalSubmitText}>
+                  {t('orders.send_proposal')}
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
-  </Modal>
-));
-
-const formatCountdown = (ms: number): string => {
-  const total = Math.max(0, ms);
-  const m = Math.floor(total / 60000);
-  const s = Math.floor((total % 60000) / 1000);
-  return `${m}:${s.toString().padStart(2, '0')}`;
-};
+    </Modal>
+  ),
+);
 
 const OrderDetailsScreen = ({ route }: any) => {
   const { orderId } = route.params;
@@ -251,6 +244,8 @@ const OrderDetailsScreen = ({ route }: any) => {
     t,
     order,
     isLoading,
+    refetch,
+    isRefetching,
     acceptOrder,
     updateStatus,
     isProposalModalVisible,
@@ -262,21 +257,6 @@ const OrderDetailsScreen = ({ route }: any) => {
     isPreparing,
     isProcessing,
   } = useOrderDetailsLogic(orderId);
-
-  const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    if (!order?.confirmationExpiry) return;
-    const expiry = new Date(order.confirmationExpiry).getTime();
-    if (expiry <= Date.now()) return;
-    const interval = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(interval);
-  }, [order?.confirmationExpiry]);
-
-  const confirmationRemaining = order?.confirmationExpiry
-    ? Math.max(0, new Date(order.confirmationExpiry).getTime() - now)
-    : 0;
-  const isInConfirmationWindow = confirmationRemaining > 0;
 
   if (isLoading) {
     return (
@@ -290,7 +270,16 @@ const OrderDetailsScreen = ({ route }: any) => {
     <SafeAreaView style={styles.container}>
       <CustomHeader title={t('orders.details')} showBack={true} />
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={refetch}
+            tintColor={theme.colors.primary}
+          />
+        }
+      >
         <StatusCard t={t} order={order} />
 
         {order?.cancellationReason && (
@@ -307,16 +296,6 @@ const OrderDetailsScreen = ({ route }: any) => {
           </View>
         )}
 
-        {isInConfirmationWindow && (
-          <View style={styles.countdownBanner}>
-            <Clock size={18} color="#b45309" />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.countdownTitle}>{t('orders.awaiting_confirmation')}</Text>
-              <Text style={styles.countdownTimer}>{formatCountdown(confirmationRemaining)}</Text>
-            </View>
-          </View>
-        )}
-
         <Text style={styles.sectionTitle}>{t('orders.order_items')}</Text>
         {order?.items.map((item: any) => (
           <OrderItem key={item.id} t={t} item={item} />
@@ -325,7 +304,9 @@ const OrderDetailsScreen = ({ route }: any) => {
         {order && (
           <View style={styles.priceSummaryCard}>
             <View style={styles.priceRow}>
-              <Text style={styles.priceTotalLabel}>{t('orders.total_price')}</Text>
+              <Text style={styles.priceTotalLabel}>
+                {t('orders.total_price')}
+              </Text>
               <Text style={styles.priceTotalValue}>
                 {(order.totalAmount ?? 0).toFixed(2)} {t('common.currency')}
               </Text>
@@ -335,7 +316,7 @@ const OrderDetailsScreen = ({ route }: any) => {
       </ScrollView>
 
       <View style={styles.footerActions}>
-        {isInConfirmationWindow ? null : canAccept ? (
+        {canAccept ? (
           <View style={styles.footerButtonsRow}>
             <TouchableOpacity
               style={[

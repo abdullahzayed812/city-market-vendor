@@ -7,7 +7,7 @@ export const useOrdersLogic = () => {
   const { t, i18n } = useTranslation();
   const isRTL = i18n.language === 'ar';
 
-  const { orders, isLoading } = useOrders();
+  const { orders, isLoading, refetch, isRefetching, fetchNextPage, hasNextPage, isFetchingNextPage } = useOrders();
 
   const getStatusConfig = useCallback((status: string) => {
     switch (status.toUpperCase()) {
@@ -30,6 +30,11 @@ export const useOrdersLogic = () => {
     isRTL,
     orders,
     isLoading,
+    refetch,
+    isRefetching,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
     getStatusConfig,
   };
 };

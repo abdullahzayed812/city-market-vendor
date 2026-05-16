@@ -9,6 +9,13 @@ export const ProductService = {
     );
     return response.data?.data;
   },
+  getVendorProductsByCategory: async (vendorId: string, categoryId: string, page: number = 1, limit: number = 20) => {
+    const response = await apiClient.get<ApiResponse<{ data: VendorProduct[]; total: number; page: number; limit: number }>>(
+      `/catalog/products/vendor/${vendorId}`,
+      { params: { vendorCategoryId: categoryId, page, limit } }
+    );
+    return response.data?.data;
+  },
   getCategories: async () => {
     const response = await apiClient.get<ApiResponse<Category[]>>(
       '/catalog/categories',

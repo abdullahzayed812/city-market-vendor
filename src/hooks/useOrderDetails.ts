@@ -14,7 +14,7 @@ export const useOrderDetails = (orderId: string) => {
   const vendorId = vendor?.id;
   const { t } = useTranslation();
 
-  const { data: order, isLoading, error } = useQuery({
+  const { data: order, isLoading, error, refetch, isRefetching } = useQuery({
     queryKey: ['vendorOrder', orderId],
     queryFn: () => OrderService.getOrderById(orderId),
     enabled: !!orderId,
@@ -57,6 +57,7 @@ export const useOrderDetails = (orderId: string) => {
     };
 
     const events = [
+      EventType.ORDER_CONFIRMED,
       EventType.PROPOSAL_ACCEPTED,
       EventType.PROPOSAL_REJECTED,
       EventType.VENDOR_ORDER_PROPOSED,
@@ -75,11 +76,13 @@ export const useOrderDetails = (orderId: string) => {
     order,
     isLoading,
     error,
+    refetch,
+    isRefetching,
     acceptOrder: acceptMutation.mutate,
     isAccepting: acceptMutation.isPending,
     proposeChanges: proposeMutation.mutate,
     isProposing: proposeMutation.isPending,
     updateStatus: statusMutation.mutate,
-    isUpdatingStatus: statusMutation.isPending
+    isUpdatingStatus: statusMutation.isPending,
   };
 };

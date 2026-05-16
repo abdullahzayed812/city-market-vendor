@@ -13,6 +13,8 @@ export const useOrderDetailsLogic = (orderId: string) => {
   const {
     order,
     isLoading,
+    refetch,
+    isRefetching,
     acceptOrder,
     proposeChanges,
     updateStatus,
@@ -108,6 +110,8 @@ export const useOrderDetailsLogic = (orderId: string) => {
     t,
     order,
     isLoading,
+    refetch,
+    isRefetching,
     acceptOrder,
     updateStatus,
     isProposalModalVisible,

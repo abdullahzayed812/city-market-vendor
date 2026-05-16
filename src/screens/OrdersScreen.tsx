@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   FlatList,
   ActivityIndicator,
   TouchableOpacity,
+  RefreshControl,
 } from 'react-native';
 import { ShoppingBag, ChevronRight, Package, Clock } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,83 +14,76 @@ import { theme } from '../theme';
 import CustomHeader from '../components/common/CustomHeader';
 import { useOrdersLogic } from '../hooks/useOrdersLogic';
 
-const formatCountdown = (ms: number): string => {
-  const total = Math.max(0, ms);
-  const m = Math.floor(total / 60000);
-  const s = Math.floor((total % 60000) / 1000);
-  return `${m}:${s.toString().padStart(2, '0')}`;
-};
+const OrderItem = React.memo(
+  ({ item, getStatusConfig, t, navigation, isRTL }: any) => {
+    const status = getStatusConfig(item.status);
 
-const OrderItem = React.memo(({ item, getStatusConfig, t, navigation, isRTL, now }: any) => {
-  const status = getStatusConfig(item.status);
-  const remaining = item.confirmationExpiry
-    ? Math.max(0, new Date(item.confirmationExpiry).getTime() - now)
-    : 0;
-  const isInWindow = remaining > 0;
-
-  return (
-    <TouchableOpacity
-      style={styles.orderCard}
-      activeOpacity={0.9}
-      onPress={() => navigation.navigate('OrderDetails', { orderId: item.id })}
-    >
-      <View style={styles.orderHeader}>
-        <View style={styles.idGroup}>
-          <View style={styles.iconCircle}>
-            <ShoppingBag size={18} color={theme.colors.primary} />
-          </View>
-          <View>
-            <Text style={styles.orderId}>{t('orders.order_id')} #{item.id.slice(-6).toUpperCase()}</Text>
-            <View style={styles.timeRow}>
-              <Clock size={12} color={theme.colors.textLight} />
-              <Text style={styles.dateText}>
-                {new Date(item.createdAt).toLocaleDateString()}
+    return (
+      <TouchableOpacity
+        style={styles.orderCard}
+        activeOpacity={0.9}
+        onPress={() =>
+          navigation.navigate('OrderDetails', { orderId: item.id })
+        }
+      >
+        <View style={styles.orderHeader}>
+          <View style={styles.idGroup}>
+            <View style={styles.iconCircle}>
+              <ShoppingBag size={18} color={theme.colors.primary} />
+            </View>
+            <View>
+              <Text style={styles.orderId}>
+                {t('orders.order_id')} #{item.id.slice(-6).toUpperCase()}
               </Text>
+              <View style={styles.timeRow}>
+                <Clock size={12} color={theme.colors.textLight} />
+                <Text style={styles.dateText}>
+                  {new Date(item.createdAt).toLocaleDateString()}
+                </Text>
+              </View>
             </View>
           </View>
+          <View
+            style={[
+              styles.statusBadge,
+              { backgroundColor: status.color + '15' },
+            ]}
+          >
+            <Text style={[styles.statusText, { color: status.color }]}>
+              {status.label}
+            </Text>
+          </View>
         </View>
-        <View style={[styles.statusBadge, { backgroundColor: status.color + '15' }]}>
-          <Text style={[styles.statusText, { color: status.color }]}>
-            {status.label}
-          </Text>
-        </View>
-      </View>
 
-      {isInWindow && (
-        <View style={styles.countdownBanner}>
-          <Clock size={13} color="#f59e0b" />
-          <Text style={styles.countdownText}>
-            {t('orders.awaiting_confirmation')} {formatCountdown(remaining)}
-          </Text>
-        </View>
-      )}
+        <View style={styles.divider} />
 
-      <View style={styles.divider} />
-
-      <View style={styles.orderDetails}>
-        <View style={styles.detailItem}>
-          <Package size={16} color={theme.colors.textMuted} />
-          <Text style={styles.detailText}>
-            {item.items?.length || 0} {t('products.title')}
-          </Text>
+        <View style={styles.orderDetails}>
+          <View style={styles.detailItem}>
+            <Package size={16} color={theme.colors.textMuted} />
+            <Text style={styles.detailText}>
+              {item.items?.length || 0} {t('products.title')}
+            </Text>
+          </View>
+          <View>
+            <Text style={styles.totalLabel}>{t('orders.total_price')}</Text>
+            <Text style={styles.totalAmount}>
+              {t('common.currency')} {item.totalAmount?.toFixed(2)}
+            </Text>
+          </View>
         </View>
-        <View>
-          <Text style={styles.totalLabel}>{t('orders.total_price')}</Text>
-          <Text style={styles.totalAmount}>{t('common.currency')} {item.totalAmount?.toFixed(2)}</Text>
-        </View>
-      </View>
 
-      <View style={styles.cardFooter}>
-        <Text style={styles.viewDetailsText}>{t('common.view_details')}</Text>
-        <ChevronRight
-          size={16}
-          color={theme.colors.primary}
-          style={isRTL && { transform: [{ rotate: '180deg' }] }}
-        />
-      </View>
-    </TouchableOpacity>
-  );
-});
+        <View style={styles.cardFooter}>
+          <Text style={styles.viewDetailsText}>{t('common.view_details')}</Text>
+          <ChevronRight
+            size={16}
+            color={theme.colors.primary}
+            style={isRTL && { transform: [{ rotate: '180deg' }] }}
+          />
+        </View>
+      </TouchableOpacity>
+    );
+  },
+);
 
 const OrdersScreen = ({ navigation }: any) => {
   const {
@@ -97,19 +91,13 @@ const OrdersScreen = ({ navigation }: any) => {
     isRTL,
     orders,
     isLoading,
+    refetch,
+    isRefetching,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
     getStatusConfig,
   } = useOrdersLogic();
-
-  const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    const hasWindow = (orders || []).some(
-      (o: any) => o.confirmationExpiry && new Date(o.confirmationExpiry).getTime() > Date.now(),
-    );
-    if (!hasWindow) return;
-    const interval = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(interval);
-  }, [orders]);
 
   if (isLoading) {
     return (
@@ -131,12 +119,30 @@ const OrdersScreen = ({ navigation }: any) => {
             t={t}
             navigation={navigation}
             isRTL={isRTL}
-            now={now}
           />
         )}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching}
+            onRefresh={refetch}
+            tintColor={theme.colors.primary}
+          />
+        }
+        onEndReached={() => {
+          if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+        }}
+        onEndReachedThreshold={0.3}
+        ListFooterComponent={
+          isFetchingNextPage ? (
+            <ActivityIndicator
+              style={{ paddingVertical: 16 }}
+              color={theme.colors.primary}
+            />
+          ) : null
+        }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <ShoppingBag size={80} color={theme.colors.border} />
@@ -187,7 +193,11 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: theme.radius.sm,
   },
-  statusText: { fontSize: 12, fontWeight: theme.typography.weights.bold, textTransform: 'capitalize' },
+  statusText: {
+    fontSize: 12,
+    fontWeight: theme.typography.weights.bold,
+    textTransform: 'capitalize',
+  },
   countdownBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -203,7 +213,12 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.semibold,
     color: '#b45309',
   },
-  divider: { height: 1, backgroundColor: theme.colors.border, marginBottom: 16, opacity: 0.5 },
+  divider: {
+    height: 1,
+    backgroundColor: theme.colors.border,
+    marginBottom: 16,
+    opacity: 0.5,
+  },
   orderDetails: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -231,7 +246,11 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: theme.radius.md,
   },
-  viewDetailsText: { fontSize: 13, fontWeight: theme.typography.weights.bold, color: theme.colors.primary },
+  viewDetailsText: {
+    fontSize: 13,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.primary,
+  },
   emptyContainer: { alignItems: 'center', marginTop: 100 },
   emptyText: { marginTop: 16, fontSize: 16, color: theme.colors.textMuted },
 });
