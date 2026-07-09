@@ -67,6 +67,7 @@ const ProfileScreen = () => {
     t,
     isRTL,
     signOut,
+    signOutAllDevices,
     vendor,
     user,
     toggleLanguage,
@@ -171,6 +172,11 @@ const ProfileScreen = () => {
         <TouchableOpacity style={styles.logoutButton} onPress={signOut}>
           <LogOut size={20} color={theme.colors.error} />
           <Text style={styles.logoutText}>{t('common.logout')}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.logoutButton} onPress={signOutAllDevices}>
+          <LogOut size={20} color={theme.colors.error} />
+          <Text style={styles.logoutText}>{t('common.logout_all_devices')}</Text>
         </TouchableOpacity>
 
         <Text style={styles.versionText}>

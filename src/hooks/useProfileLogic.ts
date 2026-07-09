@@ -9,7 +9,7 @@ import { VendorService } from '../services/api/vendorService';
 export const useProfileLogic = () => {
   const { t, i18n } = useTranslation();
   const navigation = useNavigation<any>();
-  const { signOut, vendor, user } = useAuth();
+  const { signOut, signOutAllDevices, vendor, user } = useAuth();
   const isRTL = i18n.language === 'ar';
   const queryClient = useQueryClient();
   const [mapVisible, setMapVisible] = useState(false);
@@ -52,6 +52,7 @@ export const useProfileLogic = () => {
     t,
     isRTL,
     signOut,
+    signOutAllDevices,
     vendor,
     user,
     toggleLanguage,

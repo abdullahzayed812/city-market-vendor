@@ -20,6 +20,7 @@ import {
   Trash2,
   Send,
   XCircle,
+  Clock,
 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../theme';
@@ -256,6 +257,8 @@ const OrderDetailsScreen = ({ route }: any) => {
     canAccept,
     isPreparing,
     isProcessing,
+    vendorConfirmationCountdown,
+    customerDecisionCountdown,
   } = useOrderDetailsLogic(orderId);
 
   if (isLoading) {
@@ -281,6 +284,40 @@ const OrderDetailsScreen = ({ route }: any) => {
         }
       >
         <StatusCard t={t} order={order} />
+
+        {canAccept && !vendorConfirmationCountdown.isExpired && vendorConfirmationCountdown.remainingSeconds > 0 && (
+          <View style={[
+            styles.countdownBanner,
+            vendorConfirmationCountdown.isWarning && { backgroundColor: '#fee2e2', borderColor: '#fca5a5' },
+          ]}>
+            <Clock size={18} color={vendorConfirmationCountdown.isWarning ? '#dc2626' : '#b45309'} />
+            <View>
+              <Text style={[styles.countdownTitle, vendorConfirmationCountdown.isWarning && { color: '#991b1b' }]}>
+                {t('orders.confirm_deadline', 'Confirm before')}
+              </Text>
+              <Text style={[styles.countdownTimer, vendorConfirmationCountdown.isWarning && { color: '#dc2626' }]}>
+                {vendorConfirmationCountdown.formattedTime}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {order?.status === 'PROPOSAL_SENT' && !customerDecisionCountdown.isExpired && customerDecisionCountdown.remainingSeconds > 0 && (
+          <View style={[
+            styles.countdownBanner,
+            customerDecisionCountdown.isWarning && { backgroundColor: '#fee2e2', borderColor: '#fca5a5' },
+          ]}>
+            <Clock size={18} color={customerDecisionCountdown.isWarning ? '#dc2626' : '#b45309'} />
+            <View>
+              <Text style={[styles.countdownTitle, customerDecisionCountdown.isWarning && { color: '#991b1b' }]}>
+                {t('orders.customer_decision_deadline', 'Customer deciding')}
+              </Text>
+              <Text style={[styles.countdownTimer, customerDecisionCountdown.isWarning && { color: '#dc2626' }]}>
+                {customerDecisionCountdown.formattedTime}
+              </Text>
+            </View>
+          </View>
+        )}
 
         {order?.cancellationReason && (
           <View style={styles.cancellationBanner}>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -11,11 +11,10 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
-import { Mail, Lock, Store, ChevronRight, Server } from 'lucide-react-native';
+import { Mail, Lock, Store, ChevronRight, Eye, EyeOff } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../theme';
 import { useLoginLogic } from '../hooks/useLoginLogic';
-import { SERVERS, getServerIP, setServerIP } from '../utils/serverConfig';
 
 const QuickLoginChip = React.memo(({ vendor, onLogin, setEmail }: any) => (
   <TouchableOpacity
@@ -31,29 +30,6 @@ const QuickLoginChip = React.memo(({ vendor, onLogin, setEmail }: any) => (
 ));
 
 const LoginScreen = () => {
-  const [selectedServer, setSelectedServer] = useState(SERVERS.PC);
-  const [customIP, setCustomIP] = useState(SERVERS.PC);
-
-  useEffect(() => {
-    const loadServer = async () => {
-      const ip = await getServerIP();
-      setSelectedServer(ip);
-      setCustomIP(ip);
-    };
-    loadServer();
-  }, []);
-
-  const handleServerChange = async (ip: string) => {
-    await setServerIP(ip);
-    setSelectedServer(ip);
-    setCustomIP(ip);
-  };
-
-  const handleApplyCustomIP = () => {
-    const trimmed = customIP.trim();
-    if (trimmed) handleServerChange(trimmed);
-  };
-
   const {
     t,
     isRTL,
@@ -65,12 +41,13 @@ const LoginScreen = () => {
     quickVendors,
     handleLogin,
   } = useLoginLogic();
+  const [showPassword, setShowPassword] = useState(false);
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
       <View style={styles.topBanner} />
-      
+
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -87,45 +64,6 @@ const LoginScreen = () => {
               </View>
               <Text style={styles.title}>{t('auth.login_title')}</Text>
               <Text style={styles.subtitle}>{t('auth.login_subtitle')}</Text>
-            </View>
-
-            {/* Server Selection */}
-            <View style={styles.serverContainer}>
-              <View style={[styles.serverHeader, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-                <Server size={14} color={theme.colors.primary} />
-                <Text style={styles.serverTitle}>Target Server</Text>
-              </View>
-              <View style={[styles.serverOptions, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-                <TouchableOpacity
-                  style={[styles.serverOption, selectedServer === SERVERS.PC && styles.serverOptionActive]}
-                  onPress={() => handleServerChange(SERVERS.PC)}
-                >
-                  <Text style={[styles.serverOptionText, selectedServer === SERVERS.PC && styles.serverOptionTextActive]}>PC</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.serverOption, selectedServer === SERVERS.LAPTOP && styles.serverOptionActive]}
-                  onPress={() => handleServerChange(SERVERS.LAPTOP)}
-                >
-                  <Text style={[styles.serverOptionText, selectedServer === SERVERS.LAPTOP && styles.serverOptionTextActive]}>Laptop</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={styles.customIPRow}>
-                <TextInput
-                  style={styles.customIPInput}
-                  value={customIP}
-                  onChangeText={setCustomIP}
-                  placeholder="192.168.0.x"
-                  placeholderTextColor={theme.colors.textLight}
-                  keyboardType="decimal-pad"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  onSubmitEditing={handleApplyCustomIP}
-                  returnKeyType="done"
-                />
-                <TouchableOpacity style={styles.customIPApply} onPress={handleApplyCustomIP}>
-                  <Text style={styles.customIPApplyText}>Apply</Text>
-                </TouchableOpacity>
-              </View>
             </View>
 
             <View style={styles.form}>
@@ -163,9 +101,19 @@ const LoginScreen = () => {
                   placeholder={t('auth.password_placeholder')}
                   value={password}
                   onChangeText={setPassword}
-                  secureTextEntry
+                  secureTextEntry={!showPassword}
                   placeholderTextColor={theme.colors.textLight}
                 />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(v => !v)}
+                  accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? (
+                    <EyeOff size={20} color={theme.colors.textLight} />
+                  ) : (
+                    <Eye size={20} color={theme.colors.textLight} />
+                  )}
+                </TouchableOpacity>
               </View>
 
               <TouchableOpacity
@@ -199,11 +147,11 @@ const LoginScreen = () => {
 
               <View style={[styles.quickLoginGrid, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                 {quickVendors.map((v) => (
-                  <QuickLoginChip 
-                    key={v.email} 
-                    vendor={v} 
-                    onLogin={handleLogin} 
-                    setEmail={setEmail} 
+                  <QuickLoginChip
+                    key={v.email}
+                    vendor={v}
+                    onLogin={handleLogin}
+                    setEmail={setEmail}
                   />
                 ))}
               </View>
@@ -258,80 +206,6 @@ const styles = StyleSheet.create({
     color: theme.colors.textLight,
     marginTop: 8,
     textAlign: 'center',
-  },
-  serverContainer: {
-    backgroundColor: theme.colors.background,
-    padding: 12,
-    borderRadius: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  serverHeader: {
-    alignItems: 'center',
-    marginBottom: 8,
-    gap: 6,
-  },
-  serverTitle: {
-    fontSize: 12,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.primary,
-    textTransform: 'uppercase',
-  },
-  serverOptions: {
-    gap: 8,
-  },
-  serverOption: {
-    flex: 1,
-    height: 36,
-    borderRadius: 8,
-    backgroundColor: theme.colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  serverOptionActive: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
-  },
-  serverOptionText: {
-    fontSize: 13,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.textLight,
-  },
-  serverOptionTextActive: {
-    color: theme.colors.white,
-  },
-  customIPRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-    gap: 8,
-  },
-  customIPInput: {
-    flex: 1,
-    height: 38,
-    backgroundColor: theme.colors.surface,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    paddingHorizontal: 12,
-    fontSize: 14,
-    color: theme.colors.secondary,
-  },
-  customIPApply: {
-    height: 38,
-    paddingHorizontal: 14,
-    backgroundColor: theme.colors.primary,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  customIPApplyText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: theme.colors.white,
   },
   form: { width: '100%' },
   inputLabelContainer: { width: '100%', marginBottom: 8, paddingHorizontal: 4 },

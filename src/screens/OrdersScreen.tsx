@@ -8,11 +8,27 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
-import { ShoppingBag, ChevronRight, Package, Clock } from 'lucide-react-native';
+import { ShoppingBag, ChevronRight, Package, Clock, Timer } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../theme';
 import CustomHeader from '../components/common/CustomHeader';
 import { useOrdersLogic } from '../hooks/useOrdersLogic';
+import { useSlaCountdown } from '../hooks/useSlaCountdown';
+import { VendorOrderStatus } from '@city-market/shared';
+
+const CountdownBadge = ({ deadline, label, isUrgent }: { deadline?: Date | string | null; label: string; isUrgent?: boolean }) => {
+  const { remainingSeconds, isExpired, isWarning, formattedTime } = useSlaCountdown(deadline);
+  if (!deadline || isExpired || remainingSeconds === 0) return null;
+  const urgent = isUrgent || isWarning;
+  return (
+    <View style={[styles.countdownBanner, urgent && { backgroundColor: '#fee2e2' }]}>
+      <Timer size={13} color={urgent ? '#dc2626' : '#b45309'} />
+      <Text style={[styles.countdownText, urgent && { color: '#dc2626' }]}>
+        {label}: {formattedTime}
+      </Text>
+    </View>
+  );
+};
 
 const OrderItem = React.memo(
   ({ item, getStatusConfig, t, navigation, isRTL }: any) => {
@@ -54,6 +70,13 @@ const OrderItem = React.memo(
             </Text>
           </View>
         </View>
+
+        {item.status === VendorOrderStatus.PENDING && (
+          <CountdownBadge deadline={item.vendorConfirmationDeadline} label={t('orders.confirm_before', 'Confirm before')} />
+        )}
+        {item.status === VendorOrderStatus.PROPOSAL_SENT && (
+          <CountdownBadge deadline={item.customerDecisionDeadline} label={t('orders.customer_deciding', 'Customer deciding')} />
+        )}
 
         <View style={styles.divider} />
 

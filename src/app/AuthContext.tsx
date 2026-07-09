@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { VendorService } from '../services/api/vendorService';
 import { setSignOutCallback } from '../services/api/apiClient';
+import { AuthService } from '../services/api/authService';
+import { SecureStorage } from '../services/secureStorage';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -11,6 +13,7 @@ interface AuthContextType {
   vendor: any | null;
   signIn: (user: any, accessToken: string, refreshToken: string) => Promise<void>;
   signOut: () => Promise<void>;
+  signOutAllDevices: () => Promise<void>;
   updateVendor: (vendor: any) => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -41,14 +44,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const checkAuth = async () => {
     try {
-      const savedToken = await AsyncStorage.getItem('auth_token');
+      const savedToken = await SecureStorage.getAccessToken();
       const savedUser = await AsyncStorage.getItem('auth_user');
       const savedVendor = await AsyncStorage.getItem('auth_vendor');
 
       if (savedToken && savedUser) {
         setToken(savedToken);
         setUser(JSON.parse(savedUser));
-        
+
         if (savedVendor) {
           setVendor(JSON.parse(savedVendor));
         } else {
@@ -62,7 +65,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             console.error('Failed to fetch profile in checkAuth:', e);
           }
         }
-        
+
         setIsAuthenticated(true);
       }
     } catch (e) {
@@ -74,8 +77,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const signIn = async (userData: any, accessToken: string, refreshToken: string) => {
     try {
-      await AsyncStorage.setItem('auth_token', accessToken);
-      await AsyncStorage.setItem('refresh_token', refreshToken);
+      await SecureStorage.setAccessToken(accessToken);
+      await SecureStorage.setRefreshToken(refreshToken);
       await AsyncStorage.setItem('auth_user', JSON.stringify(userData));
 
       setToken(accessToken);
@@ -114,17 +117,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const signOut = async () => {
-    await AsyncStorage.multiRemove([
-      'auth_token',
-      'refresh_token',
-      'auth_user',
-      'auth_vendor',
-    ]);
+  const clearLocalState = async () => {
+    await SecureStorage.clearAll();
+    await AsyncStorage.multiRemove(['auth_user', 'auth_vendor']);
     setToken(null);
     setUser(null);
     setVendor(null);
     setIsAuthenticated(false);
+  };
+
+  const signOut = async () => {
+    try {
+      await AuthService.logout();
+    } catch {
+      // ignore — we still clear local state
+    }
+    await clearLocalState();
+  };
+
+  const signOutAllDevices = async () => {
+    try {
+      await AuthService.logoutAll();
+    } catch {
+      // ignore — we still clear local state
+    }
+    await clearLocalState();
   };
 
   return (
@@ -137,6 +154,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         vendor,
         signIn,
         signOut,
+        signOutAllDevices,
         updateVendor,
         refreshProfile,
       }}

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useOrderDetails } from './useOrderDetails';
+import { useSlaCountdown } from './useSlaCountdown';
 import {
   VendorOrderStatus,
   ProposalType,
@@ -106,6 +107,15 @@ export const useOrderDetailsLogic = (orderId: string) => {
   const isPreparing = order?.status === VendorOrderStatus.PREPARING;
   const isProcessing = isAccepting || isProposing || isUpdatingStatus;
 
+  const vendorConfirmationCountdown = useSlaCountdown(
+    canAccept ? (order?.vendorConfirmationDeadline ?? null) : null,
+  );
+  const customerDecisionCountdown = useSlaCountdown(
+    order?.status === VendorOrderStatus.PROPOSAL_SENT
+      ? (order?.customerDecisionDeadline ?? null)
+      : null,
+  );
+
   return {
     t,
     order,
@@ -123,5 +133,7 @@ export const useOrderDetailsLogic = (orderId: string) => {
     isPreparing,
     isProcessing,
     isUpdatingStatus,
+    vendorConfirmationCountdown,
+    customerDecisionCountdown,
   };
 };

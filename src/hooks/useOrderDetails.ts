@@ -63,6 +63,9 @@ export const useOrderDetails = (orderId: string) => {
       EventType.VENDOR_ORDER_PROPOSED,
       EventType.VENDOR_ORDER_CONFIRMED,
       EventType.ORDER_DELIVERED,
+      EventType.SLA_TIMER_STARTED,
+      EventType.SLA_VENDOR_CONFIRMATION_EXPIRED,
+      EventType.SLA_CUSTOMER_DECISION_EXPIRED,
     ];
 
     events.forEach(event => socket.on(event, handleUpdate));

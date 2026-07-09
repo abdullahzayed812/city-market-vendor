@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from './AuthContext';
 import { getSocketURL as fetchSocketURL } from '../utils/serverConfig';
+import { SecureStorage } from '../services/secureStorage';
 
 interface SocketContextType {
   socket: Socket | null;
@@ -29,7 +29,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         return;
       }
 
-      const token = await AsyncStorage.getItem('auth_token');
+      const token = await SecureStorage.getAccessToken();
       const SOCKET_URL = await fetchSocketURL();
       
       newSocket = io(SOCKET_URL, {
