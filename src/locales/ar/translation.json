@@ -113,7 +113,11 @@
     "description": "الوصف",
     "quantity": "الكمية",
     "unit": "وحدة",
-    "no_products": "لم يتم العثور على منتجات"
+    "no_products": "لم يتم العثور على منتجات",
+    "bulk_add_title": "إضافة منتجات",
+    "bulk_add_n": "إضافة {{count}} منتج",
+    "bulk_added_count": "تمت الإضافة",
+    "bulk_skipped_count": "تم التجاوز"
   },
   "profile": {
     "title": "الملف الشخصي",

@@ -6,6 +6,7 @@ export const useProductsLogic = () => {
   const { t } = useTranslation();
   const [globalSearchStr, setGlobalSearchStr] = useState('');
   const [debouncedGlobalSearch, setDebouncedGlobalSearch] = useState('');
+  const [globalCategoryFilter, setGlobalCategoryFilter] = useState('');
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -18,35 +19,40 @@ export const useProductsLogic = () => {
 
   const {
     categories,
+    globalCategories,
     globalProducts,
+    globalProductsTotal,
     isLoading,
     isGlobalProductsLoading,
-    createProduct,
-    isCreatingProduct,
-  } = useProducts(debouncedGlobalSearch);
+    bulkAddProductsFromGlobal,
+    isBulkAddingProducts,
+    bulkAddProductsFromCategory,
+    isBulkAddingFromCategory,
+  } = useProducts(debouncedGlobalSearch, globalCategoryFilter || undefined);
 
-  const [addProductModalVisible, setAddProductModalVisible] = useState(false);
+  const [bulkAddModalVisible, setBulkAddModalVisible] = useState(false);
 
-  const handleAddProduct = useCallback(async (data: any) => {
-    await createProduct(data);
-    setAddProductModalVisible(false);
-  }, [createProduct]);
-
-  const openAddProductModal = useCallback(() => {
-    setAddProductModalVisible(true);
+  const openBulkAddModal = useCallback(() => {
+    setBulkAddModalVisible(true);
   }, []);
 
   return {
     t,
     categories,
+    globalCategories,
     globalProducts,
+    globalProductsTotal,
     isLoading,
     isGlobalProductsLoading,
-    addProductModalVisible,
-    setAddProductModalVisible,
-    handleAddProduct,
-    isCreatingProduct,
-    openAddProductModal,
     setGlobalSearchStr,
+    globalCategoryFilter,
+    setGlobalCategoryFilter,
+    bulkAddModalVisible,
+    setBulkAddModalVisible,
+    openBulkAddModal,
+    bulkAddProductsFromGlobal,
+    isBulkAddingProducts,
+    bulkAddProductsFromCategory,
+    isBulkAddingFromCategory,
   };
 };

@@ -113,7 +113,11 @@
     "description": "Description",
     "quantity": "Quantity",
     "unit": "Unit",
-    "no_products": "No products found"
+    "no_products": "No products found",
+    "bulk_add_title": "Add Products",
+    "bulk_add_n": "Add {{count}} product(s)",
+    "bulk_added_count": "added",
+    "bulk_skipped_count": "skipped"
   },
   "profile": {
     "title": "Profile",

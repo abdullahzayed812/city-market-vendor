@@ -1,5 +1,6 @@
 import apiClient from './apiClient';
 import { ApiResponse, VendorProduct, Category } from '@city-market/shared';
+import type { BulkAddVendorProductsFromGlobalItem, BulkAddVendorProductsFromGlobalResult } from '@city-market/shared';
 
 export const ProductService = {
   getVendorProducts: async (vendorId: string, page: number = 1, limit: number = 20) => {
@@ -45,23 +46,30 @@ export const ProductService = {
     );
     return response.data?.data;
   },
-  createVendorProduct: async (data: any) => {
-    const response = await apiClient.post<ApiResponse<VendorProduct>>(
-      '/catalog/products',
-      data,
-    );
-    return response.data?.data;
-  },
   getGlobalCategories: async () => {
     const response = await apiClient.get<ApiResponse<Category[]>>(
       '/catalog/categories/global',
     );
     return response.data?.data;
   },
-  getGlobalProducts: async (page: number = 1, limit: number = 100, search?: string) => {
+  getGlobalProducts: async (page: number = 1, limit: number = 100, search?: string, globalCategoryId?: string) => {
     const response = await apiClient.get<ApiResponse<{ data: any[]; total: number }>>(
       '/catalog/global-products',
-      { params: { page, limit, search } }
+      { params: { page, limit, search, globalCategoryId } }
+    );
+    return response.data?.data;
+  },
+  bulkAddProductsFromGlobal: async (vendorId: string, items: BulkAddVendorProductsFromGlobalItem[]) => {
+    const response = await apiClient.post<ApiResponse<BulkAddVendorProductsFromGlobalResult>>(
+      `/catalog/products/vendor/${vendorId}/bulk-add-global`,
+      { items },
+    );
+    return response.data?.data;
+  },
+  bulkAddProductsFromCategory: async (vendorId: string, globalCategoryId: string) => {
+    const response = await apiClient.post<ApiResponse<BulkAddVendorProductsFromGlobalResult>>(
+      `/catalog/products/vendor/${vendorId}/bulk-add-global`,
+      { globalCategoryId },
     );
     return response.data?.data;
   },
