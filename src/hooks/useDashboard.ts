@@ -18,7 +18,7 @@ export const useDashboard = () => {
   } = useVendorProfile();
 
   const { orders } = useOrders();
-  const { products } = useProducts();
+  const { productsTotal } = useProducts();
   const { pendingData, isLoading: earningsLoading } = useEarnings();
 
   const activeOrdersCount = useMemo(() =>
@@ -71,7 +71,7 @@ export const useDashboard = () => {
     totalRevenue,
     platformCommission,
     netEarnings,
-    productsCount: products?.length || 0,
+    productsCount: productsTotal,
     isOpen,
     statusLabel,
     statusColor,

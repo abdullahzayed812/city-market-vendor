@@ -27,6 +27,12 @@ export const useProducts = (globalProductSearch?: string, globalCategoryId?: str
     queryFn: () => ProductService.getGlobalProducts(1, 100, globalProductSearch, globalCategoryId),
   });
 
+  const { data: vendorProductsData } = useQuery({
+    queryKey: ['vendorProductsCount', vendorId],
+    queryFn: () => ProductService.getVendorProducts(vendorId!, 1, 1),
+    enabled: !!vendorId,
+  });
+
   const bulkAddProductsMutation = useMutation({
     mutationFn: (items: BulkAddVendorProductsFromGlobalItem[]) => ProductService.bulkAddProductsFromGlobal(vendorId!, items),
     onSuccess: (data) => {
@@ -70,6 +76,7 @@ export const useProducts = (globalProductSearch?: string, globalCategoryId?: str
     globalCategories: globalCategoriesData || [],
     globalProducts: globalProductsData?.data || [],
     globalProductsTotal: globalProductsData?.total || 0,
+    productsTotal: vendorProductsData?.total || 0,
     isLoading: categoriesLoading,
     isGlobalProductsLoading: globalProductsLoading,
     bulkAddProductsFromGlobal: bulkAddProductsMutation.mutateAsync,

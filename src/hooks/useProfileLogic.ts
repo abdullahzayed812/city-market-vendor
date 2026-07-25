@@ -2,16 +2,15 @@ import { useTranslation } from 'react-i18next';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../app/AuthContext';
 import { useCallback, useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 import { VendorService } from '../services/api/vendorService';
 
 export const useProfileLogic = () => {
   const { t, i18n } = useTranslation();
   const navigation = useNavigation<any>();
-  const { signOut, signOutAllDevices, vendor, user } = useAuth();
+  const { signOut, signOutAllDevices, vendor, user, refreshProfile } = useAuth();
   const isRTL = i18n.language === 'ar';
-  const queryClient = useQueryClient();
   const [mapVisible, setMapVisible] = useState(false);
 
   const toggleLanguage = useCallback(() => {
@@ -24,8 +23,8 @@ export const useProfileLogic = () => {
 
   const updateMutation = useMutation({
     mutationFn: (data: any) => VendorService.updateProfile(vendor?.id || '', data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['vendor-profile'] });
+    onSuccess: async () => {
+      await refreshProfile();
       Toast.show({
         type: 'success',
         text1: t('profile.update_success') || 'Profile Updated',
