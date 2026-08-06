@@ -3,17 +3,10 @@ import { ApiResponse, VendorProduct, Category } from '@city-market/shared';
 import type { BulkAddVendorProductsFromGlobalItem, BulkAddVendorProductsFromGlobalResult } from '@city-market/shared';
 
 export const ProductService = {
-  getVendorProducts: async (vendorId: string, page: number = 1, limit: number = 20) => {
+  getVendorProducts: async (vendorId: string, page: number = 1, limit: number = 20, categoryId?: string) => {
     const response = await apiClient.get<ApiResponse<{ data: VendorProduct[]; total: number; page: number; limit: number }>>(
       `/catalog/products/vendor/${vendorId}`,
-      { params: { page, limit } }
-    );
-    return response.data?.data;
-  },
-  getVendorProductsByCategory: async (vendorId: string, categoryId: string, page: number = 1, limit: number = 20) => {
-    const response = await apiClient.get<ApiResponse<{ data: VendorProduct[]; total: number; page: number; limit: number }>>(
-      `/catalog/products/vendor/${vendorId}`,
-      { params: { vendorCategoryId: categoryId, page, limit } }
+      { params: { page, limit, vendorCategoryId: categoryId } }
     );
     return response.data?.data;
   },

@@ -19,7 +19,9 @@
     "today": "today",
     "vs_avg": "vs avg",
     "currency": "EGP",
-    "earnings": "Earnings"
+    "earnings": "Earnings",
+    "all": "All",
+    "no_results": "No results found"
   },
   "auth": {
     "login_title": "Vendor Login",
@@ -92,7 +94,10 @@
     "send_proposal": "Send Proposal",
     "total_price": "Total Price",
     "awaiting_confirmation": "Awaiting customer confirmation",
-    "cancellation_reason": "Cancellation Reason"
+    "cancellation_reason": "Cancellation Reason",
+    "confirm_before": "Confirm before",
+    "confirm_deadline": "Confirm before",
+    "customer_deciding": "Customer deciding"
   },
   "products": {
     "title": "Products",
@@ -117,7 +122,10 @@
     "bulk_add_title": "Add Products",
     "bulk_add_n": "Add {{count}} product(s)",
     "bulk_added_count": "added",
-    "bulk_skipped_count": "skipped"
+    "bulk_skipped_count": "skipped",
+    "search_global_placeholder": "Search global catalog...",
+    "import_all_hint": "Imported products start with price 0 and 0 stock — set them from your Products list afterward.",
+    "bulk_add_failed": "Failed to add products"
   },
   "profile": {
     "title": "Profile",
@@ -136,7 +144,8 @@
     "reviews_subtitle": "What customers say about your store",
     "trips": "Trips",
     "reliability": "Reliability",
-    "version": "Version {{version}}"
+    "version": "Version {{version}}",
+    "store_location": "Store Location"
   },
   "reviews": {
     "title": "Store Reviews",
@@ -170,7 +179,9 @@
     "rawan": "Rawan",
     "shady_library": "Shady Library",
     "awlad_ragab": "Awlad Ragab",
-    "mazaare_al_kheir": "Mazaare Al Kheir"
+    "mazaare_al_kheir": "Mazaare Al Kheir",
+    "category_product_count": "{{count}} product(s) in this category",
+    "import_all_from_category": "Import All"
   },
   "inventory": {
     "update_stock": "Update Stock",
@@ -184,6 +195,8 @@
     "unit": "Unit",
     "weight": "Weight",
     "low_stock": "Low Stock",
+    "per_kg": "/kg",
+    "per_unit": "/unit",
     "units": {
       "kg": "kg",
       "gram": "g"

@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
@@ -11,6 +10,7 @@ import {
   Switch,
   RefreshControl,
 } from 'react-native';
+import { AppText as Text } from '@city-market/mobile-ui';
 import {
   Check,
   AlertCircle,
@@ -34,7 +34,12 @@ const StatusCard = React.memo(({ t, order }: any) => (
     <View
       style={[styles.badge, { backgroundColor: theme.colors.primary + '15' }]}
     >
-      <Text style={styles.badgeText}>
+      <Text
+        style={styles.badgeText}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        maxFontSizeMultiplier={1.2}
+      >
         {t(`orders.status_${order?.status.toLowerCase()}`)}
       </Text>
     </View>
@@ -293,7 +298,7 @@ const OrderDetailsScreen = ({ route }: any) => {
             <Clock size={18} color={vendorConfirmationCountdown.isWarning ? '#dc2626' : '#b45309'} />
             <View>
               <Text style={[styles.countdownTitle, vendorConfirmationCountdown.isWarning && { color: '#991b1b' }]}>
-                {t('orders.confirm_deadline', 'Confirm before')}
+                {t('orders.confirm_deadline')}
               </Text>
               <Text style={[styles.countdownTimer, vendorConfirmationCountdown.isWarning && { color: '#dc2626' }]}>
                 {vendorConfirmationCountdown.formattedTime}

@@ -13,7 +13,6 @@ import DashboardScreen from '../screens/DashboardScreen';
 import OrdersScreen from '../screens/OrdersScreen';
 import OrderDetailsScreen from '../screens/OrderDetailsScreen';
 import ProductsScreen from '../screens/ProductsScreen';
-import VendorCategoryProductsScreen from '../screens/VendorCategoryProductsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import ReviewsScreen from '../screens/ReviewsScreen';
 import EarningsScreen from '../screens/EarningsScreen';
@@ -26,13 +25,6 @@ const OrdersStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="OrdersList" component={OrdersScreen} />
     <Stack.Screen name="OrderDetails" component={OrderDetailsScreen} />
-  </Stack.Navigator>
-);
-
-const ProductsStack = () => (
-  <Stack.Navigator screenOptions={{ headerShown: false }}>
-    <Stack.Screen name="ProductsList" component={ProductsScreen} />
-    <Stack.Screen name="VendorCategoryProducts" component={VendorCategoryProductsScreen} />
   </Stack.Navigator>
 );
 
@@ -81,7 +73,7 @@ const MainTabNavigator = () => {
       />
       <Tab.Screen
         name="ProductsTab"
-        component={ProductsStack}
+        component={ProductsScreen}
         options={{
           title: t('products.title'),
           tabBarIcon: ({ color, size }) => (

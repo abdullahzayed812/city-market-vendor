@@ -7,6 +7,7 @@ export const useProductsLogic = () => {
   const [globalSearchStr, setGlobalSearchStr] = useState('');
   const [debouncedGlobalSearch, setDebouncedGlobalSearch] = useState('');
   const [globalCategoryFilter, setGlobalCategoryFilter] = useState('');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -22,13 +23,23 @@ export const useProductsLogic = () => {
     globalCategories,
     globalProducts,
     globalProductsTotal,
+    products,
     isLoading,
     isGlobalProductsLoading,
+    refetch,
+    isRefetching,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    updateStock,
+    isUpdatingStock,
+    updatePrice,
+    isUpdatingPrice,
     bulkAddProductsFromGlobal,
     isBulkAddingProducts,
     bulkAddProductsFromCategory,
     isBulkAddingFromCategory,
-  } = useProducts(debouncedGlobalSearch, globalCategoryFilter || undefined);
+  } = useProducts(debouncedGlobalSearch, globalCategoryFilter || undefined, selectedCategoryId);
 
   const [bulkAddModalVisible, setBulkAddModalVisible] = useState(false);
 
@@ -42,8 +53,16 @@ export const useProductsLogic = () => {
     globalCategories,
     globalProducts,
     globalProductsTotal,
+    products,
     isLoading,
     isGlobalProductsLoading,
+    refetch,
+    isRefetching,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    selectedCategoryId,
+    setSelectedCategoryId,
     setGlobalSearchStr,
     globalCategoryFilter,
     setGlobalCategoryFilter,
@@ -54,5 +73,9 @@ export const useProductsLogic = () => {
     isBulkAddingProducts,
     bulkAddProductsFromCategory,
     isBulkAddingFromCategory,
+    updateStock,
+    isUpdatingStock,
+    updatePrice,
+    isUpdatingPrice,
   };
 };

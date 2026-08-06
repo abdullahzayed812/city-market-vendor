@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   Modal,
   View,
-  Text,
   StyleSheet,
   FlatList,
   ScrollView,
@@ -12,6 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { AppText as Text } from '@city-market/mobile-ui';
 import { useTranslation } from 'react-i18next';
 import { X, Search, Check, Plus, Trash2, PackagePlus } from 'lucide-react-native';
 import { theme } from '../theme';
@@ -133,199 +133,188 @@ const BulkAddProductsModal: React.FC<BulkAddProductsModalProps> = ({
 
   return (
     <Modal visible={visible} transparent animationType="slide">
-      <View style={styles.modalOverlay}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalContainer}>
-          <View style={[styles.modalContent, { height: '90%' }]}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{t('products.bulk_add_title', 'Add Products')}</Text>
-              <TouchableOpacity onPress={onClose}>
-                <X size={24} color={theme.colors.secondary} />
-              </TouchableOpacity>
-            </View>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>{t('products.bulk_add_title')}</Text>
+            <TouchableOpacity onPress={onClose}>
+              <X size={24} color={theme.colors.secondary} />
+            </TouchableOpacity>
+          </View>
 
-            <FlatList
-              data={globalProducts}
-              keyExtractor={(p: any) => p.id}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingBottom: 20 }}
-              ListHeaderComponent={
-                <View>
-                  {selectedList.length > 0 && (
-                    <View style={styles.selectedContainer}>
-                      {selectedList.map(({ product, price, stock }) => {
-                        const isWeight = product.measurementType === MeasurementType.WEIGHT;
-                        return (
-                          <View key={product.id} style={styles.selectedRow}>
-                            <Text style={styles.selectedName} numberOfLines={1}>
-                              {product.name}
-                            </Text>
-                            <View style={styles.selectedInputs}>
-                              <TextInput
-                                style={styles.smallInput}
-                                placeholder={t('common.currency')}
-                                keyboardType="decimal-pad"
-                                value={price}
-                                onChangeText={val => updateSelected(product.id, { price: val })}
-                              />
-                              <TextInput
-                                style={styles.smallInput}
-                                placeholder={isWeight ? t('inventory.units.gram') : t('products.unit')}
-                                keyboardType="number-pad"
-                                value={stock}
-                                onChangeText={val => updateSelected(product.id, { stock: val })}
-                              />
-                              <TouchableOpacity onPress={() => removeProduct(product.id)} style={styles.removeBtn}>
-                                <Trash2 size={16} color={theme.colors.error} />
-                              </TouchableOpacity>
-                            </View>
+          <FlatList
+            data={globalProducts}
+            keyExtractor={(p: any) => p.id}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 20 }}
+            ListHeaderComponent={
+              <View>
+                {selectedList.length > 0 && (
+                  <View style={styles.selectedContainer}>
+                    {selectedList.map(({ product, price, stock }) => {
+                      const isWeight = product.measurementType === MeasurementType.WEIGHT;
+                      return (
+                        <View key={product.id} style={styles.selectedRow}>
+                          <Text style={styles.selectedName} numberOfLines={1}>
+                            {product.name}
+                          </Text>
+                          <View style={styles.selectedInputs}>
+                            <TextInput
+                              style={styles.smallInput}
+                              placeholder={t('common.currency')}
+                              keyboardType="decimal-pad"
+                              value={price}
+                              onChangeText={val => updateSelected(product.id, { price: val })}
+                            />
+                            <TextInput
+                              style={styles.smallInput}
+                              placeholder={isWeight ? t('inventory.units.gram') : t('products.unit')}
+                              keyboardType="number-pad"
+                              value={stock}
+                              onChangeText={val => updateSelected(product.id, { stock: val })}
+                            />
+                            <TouchableOpacity onPress={() => removeProduct(product.id)} style={styles.removeBtn}>
+                              <Trash2 size={16} color={theme.colors.error} />
+                            </TouchableOpacity>
                           </View>
-                        );
-                      })}
-                    </View>
-                  )}
-
-                  <View style={styles.searchContainer}>
-                    <Search size={20} color={theme.colors.textMuted} />
-                    <TextInput
-                      style={styles.searchInput}
-                      placeholder={t('products.search_global_placeholder', 'Search global catalog...')}
-                      value={search}
-                      onChangeText={text => {
-                        setSearch(text);
-                        onSearchChange(text);
-                      }}
-                    />
-                    {isGlobalProductsLoading && (
-                      <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginStart: 8 }} />
-                    )}
+                        </View>
+                      );
+                    })}
                   </View>
+                )}
 
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryChipsRow}>
+                <View style={styles.searchContainer}>
+                  <Search size={20} color={theme.colors.textMuted} />
+                  <TextInput
+                    style={styles.searchInput}
+                    placeholder={t('products.search_global_placeholder')}
+                    value={search}
+                    onChangeText={text => {
+                      setSearch(text);
+                      onSearchChange(text);
+                    }}
+                  />
+                  {isGlobalProductsLoading && (
+                    <ActivityIndicator size="small" color={theme.colors.primary} style={{ marginStart: 8 }} />
+                  )}
+                </View>
+
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryChipsRow}>
+                  <TouchableOpacity
+                    style={[styles.categoryChip, !globalCategoryFilter && styles.categoryChipActive]}
+                    onPress={() => onCategoryFilterChange('')}
+                  >
+                    <Text style={[styles.categoryChipText, !globalCategoryFilter && styles.categoryChipTextActive]}>
+                      {t('common.all')}
+                    </Text>
+                  </TouchableOpacity>
+                  {globalCategories.map((cat: any) => (
                     <TouchableOpacity
-                      style={[styles.categoryChip, !globalCategoryFilter && styles.categoryChipActive]}
-                      onPress={() => onCategoryFilterChange('')}
+                      key={cat.id}
+                      style={[styles.categoryChip, globalCategoryFilter === cat.id && styles.categoryChipActive]}
+                      onPress={() => onCategoryFilterChange(cat.id === globalCategoryFilter ? '' : cat.id)}
                     >
-                      <Text style={[styles.categoryChipText, !globalCategoryFilter && styles.categoryChipTextActive]}>
-                        {t('common.all', 'All')}
+                      <Text
+                        style={[styles.categoryChipText, globalCategoryFilter === cat.id && styles.categoryChipTextActive]}
+                        numberOfLines={1}
+                      >
+                        {cat.name}
                       </Text>
                     </TouchableOpacity>
-                    {globalCategories.map((cat: any) => (
-                      <TouchableOpacity
-                        key={cat.id}
-                        style={[styles.categoryChip, globalCategoryFilter === cat.id && styles.categoryChipActive]}
-                        onPress={() => onCategoryFilterChange(cat.id === globalCategoryFilter ? '' : cat.id)}
-                      >
-                        <Text
-                          style={[styles.categoryChipText, globalCategoryFilter === cat.id && styles.categoryChipTextActive]}
-                          numberOfLines={1}
-                        >
-                          {cat.name}
-                        </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
+                  ))}
+                </ScrollView>
 
-                  {!!globalCategoryFilter && (
-                    <View style={styles.importCategoryBanner}>
-                      <View style={styles.importCategoryRow}>
-                        <Text style={styles.importCategoryText}>
-                          {t('vendors.category_product_count', {
-                            count: globalProductsTotal,
-                            defaultValue: `${globalProductsTotal} product(s) in this category`,
-                          })}
-                        </Text>
-                        <TouchableOpacity
-                          style={[styles.importCategoryBtn, (isImportingCategory || globalProductsTotal === 0) && { opacity: 0.6 }]}
-                          onPress={handleImportCategory}
-                          disabled={isImportingCategory || globalProductsTotal === 0}
-                        >
-                          {isImportingCategory ? (
-                            <ActivityIndicator size="small" color={theme.colors.primary} />
-                          ) : (
-                            <>
-                              <PackagePlus size={16} color={theme.colors.primary} />
-                              <Text style={styles.importCategoryBtnText}>
-                                {t('vendors.import_all_from_category', 'Import All')}
-                              </Text>
-                            </>
-                          )}
-                        </TouchableOpacity>
-                      </View>
-                      <Text style={styles.importCategoryHint}>
-                        {t(
-                          'products.import_all_hint',
-                          'Imported products start with price $0 and 0 stock — set them from your Products list afterward.',
+                {!!globalCategoryFilter && (
+                  <View style={styles.importCategoryBanner}>
+                    <View style={styles.importCategoryRow}>
+                      <Text style={styles.importCategoryText}>
+                        {t('vendors.category_product_count', { count: globalProductsTotal })}
+                      </Text>
+                      <TouchableOpacity
+                        style={[styles.importCategoryBtn, (isImportingCategory || globalProductsTotal === 0) && { opacity: 0.6 }]}
+                        onPress={handleImportCategory}
+                        disabled={isImportingCategory || globalProductsTotal === 0}
+                      >
+                        {isImportingCategory ? (
+                          <ActivityIndicator size="small" color={theme.colors.primary} />
+                        ) : (
+                          <>
+                            <PackagePlus size={16} color={theme.colors.primary} />
+                            <Text style={styles.importCategoryBtnText}>
+                              {t('vendors.import_all_from_category')}
+                            </Text>
+                          </>
                         )}
-                      </Text>
+                      </TouchableOpacity>
                     </View>
-                  )}
-                </View>
-              }
-              renderItem={({ item }: any) => {
-                const isSelected = selected.has(item.id);
-                return (
-                  <TouchableOpacity
-                    style={[styles.globalProductItem, isSelected && styles.globalProductItemSelected]}
-                    onPress={() => toggleProduct(item)}
-                  >
-                    <Text style={styles.globalProductName} numberOfLines={1}>
-                      {item.name}
+                    <Text style={styles.importCategoryHint}>
+                      {t('products.import_all_hint')}
                     </Text>
-                    {isSelected && <Check size={18} color={theme.colors.primary} />}
-                  </TouchableOpacity>
-                );
-              }}
-              ListEmptyComponent={
-                <View style={styles.emptyPickerContainer}>
-                  <Text style={styles.emptyText}>{t('common.no_results', 'No results found')}</Text>
-                </View>
-              }
-              ListFooterComponent={
-                <View style={styles.footer}>
-                  {result && (
-                    <View style={styles.resultRow}>
-                      <Text style={styles.resultAdded}>
-                        {result.added} {t('products.bulk_added_count', 'added')}
+                  </View>
+                )}
+              </View>
+            }
+            renderItem={({ item }: any) => {
+              const isSelected = selected.has(item.id);
+              return (
+                <TouchableOpacity
+                  style={[styles.globalProductItem, isSelected && styles.globalProductItemSelected]}
+                  onPress={() => toggleProduct(item)}
+                >
+                  <Text style={styles.globalProductName} numberOfLines={1}>
+                    {item.name}
+                  </Text>
+                  {isSelected && <Check size={18} color={theme.colors.primary} />}
+                </TouchableOpacity>
+              );
+            }}
+            ListEmptyComponent={
+              <View style={styles.emptyPickerContainer}>
+                <Text style={styles.emptyText}>{t('common.no_results')}</Text>
+              </View>
+            }
+            ListFooterComponent={
+              <View style={styles.footer}>
+                {result && (
+                  <View style={styles.resultRow}>
+                    <Text style={styles.resultAdded}>
+                      {result.added} {t('products.bulk_added_count')}
+                    </Text>
+                    <Text style={styles.resultSkipped}>
+                      {result.skipped} {t('products.bulk_skipped_count')}
+                    </Text>
+                  </View>
+                )}
+                <TouchableOpacity
+                  style={[styles.saveBtn, (isSubmitting || selectedList.length === 0) && { opacity: 0.7 }]}
+                  onPress={handleSubmit}
+                  disabled={isSubmitting || selectedList.length === 0}
+                >
+                  {isSubmitting ? (
+                    <ActivityIndicator color={theme.colors.white} size="small" />
+                  ) : (
+                    <>
+                      <Plus size={20} color={theme.colors.white} />
+                      <Text style={styles.saveBtnText}>
+                        {t('products.bulk_add_n', { count: selectedList.length })}
                       </Text>
-                      <Text style={styles.resultSkipped}>
-                        {result.skipped} {t('products.bulk_skipped_count', 'skipped')}
-                      </Text>
-                    </View>
+                    </>
                   )}
-                  <TouchableOpacity
-                    style={[styles.saveBtn, (isSubmitting || selectedList.length === 0) && { opacity: 0.7 }]}
-                    onPress={handleSubmit}
-                    disabled={isSubmitting || selectedList.length === 0}
-                  >
-                    {isSubmitting ? (
-                      <ActivityIndicator color={theme.colors.white} size="small" />
-                    ) : (
-                      <>
-                        <Plus size={20} color={theme.colors.white} />
-                        <Text style={styles.saveBtnText}>
-                          {t('products.bulk_add_n', {
-                            count: selectedList.length,
-                            defaultValue: `Add ${selectedList.length} product(s)`,
-                          })}
-                        </Text>
-                      </>
-                    )}
-                  </TouchableOpacity>
-                </View>
-              }
-            />
-          </View>
-        </KeyboardAvoidingView>
-      </View>
+                </TouchableOpacity>
+              </View>
+            }
+          />
+        </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };
 
 const styles = StyleSheet.create({
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalContainer: { width: '100%' },
   modalContent: {
+    height: '90%',
     backgroundColor: theme.colors.surface,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
@@ -356,6 +345,8 @@ const styles = StyleSheet.create({
   },
   selectedName: {
     flex: 1,
+    flexShrink: 1,
+    minWidth: 0,
     fontSize: 14,
     fontWeight: theme.typography.weights.semibold,
     color: theme.colors.text,
@@ -364,10 +355,12 @@ const styles = StyleSheet.create({
   selectedInputs: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexShrink: 0,
     gap: 6,
   },
   smallInput: {
     width: 64,
+    flexShrink: 0,
     height: 36,
     borderRadius: theme.radius.sm,
     borderWidth: 1,

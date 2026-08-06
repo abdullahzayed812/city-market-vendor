@@ -1,12 +1,12 @@
 import React from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
   StatusBar,
 } from 'react-native';
+import { AppText as Text } from '@city-market/mobile-ui';
 import {
   User,
   LogOut,
@@ -18,6 +18,7 @@ import {
   Star,
   MapPin,
 } from 'lucide-react-native';
+import Config from 'react-native-config';
 import { theme } from '../theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomHeader from '../components/common/CustomHeader';
@@ -60,7 +61,7 @@ const ProfileItem = React.memo(({
   );
 });
 
-export const GOOGLE_MAPS_API_KEY = 'YOUR_GOOGLE_MAPS_API_KEY';
+export const GOOGLE_MAPS_API_KEY = Config.GOOGLE_MAPS_API_KEY ?? '';
 
 const ProfileScreen = () => {
   const {
@@ -138,7 +139,7 @@ const ProfileScreen = () => {
             />
             <ProfileItem
               icon={MapPin}
-              label={t('profile.store_location') || 'Store Location'}
+              label={t('profile.store_location')}
               value={isUpdating ? <ActivityIndicator size="small" /> : vendor?.address}
               onPress={() => setMapVisible(true)}
               isLast={true}

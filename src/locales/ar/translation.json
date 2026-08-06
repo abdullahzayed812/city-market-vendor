@@ -19,7 +19,9 @@
     "today": "اليوم",
     "vs_avg": "مقارنة بالمتوسط",
     "currency": "ج.م",
-    "earnings": "الإرباح"
+    "earnings": "الإرباح",
+    "all": "الكل",
+    "no_results": "لا توجد نتائج"
   },
   "auth": {
     "login_title": "دخول التجار",
@@ -92,7 +94,10 @@
     "send_proposal": "إرسال الإقتراح",
     "total_price": "السعر الإجمالي",
     "awaiting_confirmation": "في انتظار تأكيد العميل",
-    "cancellation_reason": "سبب الإلغاء"
+    "cancellation_reason": "سبب الإلغاء",
+    "confirm_before": "أكّد قبل",
+    "confirm_deadline": "أكّد قبل",
+    "customer_deciding": "العميل يقرر"
   },
   "products": {
     "title": "المنتجات",
@@ -117,7 +122,10 @@
     "bulk_add_title": "إضافة منتجات",
     "bulk_add_n": "إضافة {{count}} منتج",
     "bulk_added_count": "تمت الإضافة",
-    "bulk_skipped_count": "تم التجاوز"
+    "bulk_skipped_count": "تم التجاوز",
+    "search_global_placeholder": "ابحث في الكتالوج العام...",
+    "import_all_hint": "المنتجات المستوردة تبدأ بسعر 0 ومخزون 0 — قم بتعديلها من قائمة منتجاتك لاحقاً.",
+    "bulk_add_failed": "فشل إضافة المنتجات"
   },
   "profile": {
     "title": "الملف الشخصي",
@@ -136,7 +144,8 @@
     "reviews_subtitle": "ما يقوله العملاء عن متجرك",
     "trips": "الرحلات",
     "reliability": "الموثوقية",
-    "version": "الإصدار {{version}}"
+    "version": "الإصدار {{version}}",
+    "store_location": "موقع المتجر"
   },
   "reviews": {
     "title": "تقييمات المتجر",
@@ -170,7 +179,9 @@
     "rawan": "حلواني روان",
     "shady_library": "مكتبة شادي",
     "awlad_ragab": "خضروات وفاكهة أولاد رجب",
-    "mazaare_al_kheir": "مزارع الخير"
+    "mazaare_al_kheir": "مزارع الخير",
+    "category_product_count": "{{count}} منتج في هذا التصنيف",
+    "import_all_from_category": "استيراد الكل"
   },
   "inventory": {
     "update_stock": "تحديث المخزون",
@@ -183,6 +194,9 @@
     "product_created": "تم إنشاء المنتج بنجاح",
     "unit": "وحدة",
     "weight": "وزن",
+    "low_stock": "مخزون منخفض",
+    "per_kg": "/كجم",
+    "per_unit": "/وحدة",
     "units": {
       "kg": "كجم",
       "gram": "جرام"

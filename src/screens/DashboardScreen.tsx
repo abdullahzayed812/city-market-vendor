@@ -1,13 +1,13 @@
 import React from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   ScrollView,
   Switch,
   ActivityIndicator,
   StatusBar,
 } from 'react-native';
+import { AppText as Text } from '@city-market/mobile-ui';
 import { theme } from '../theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {

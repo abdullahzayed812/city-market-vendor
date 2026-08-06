@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, StatusBar } from 'react-native';
+import { View, StyleSheet, FlatList, ActivityIndicator, StatusBar } from 'react-native';
+import { AppText as Text } from '@city-market/mobile-ui';
 import { theme } from '../theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomHeader from '../components/common/CustomHeader';

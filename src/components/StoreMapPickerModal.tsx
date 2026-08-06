@@ -1,12 +1,12 @@
 import React, { useState, useRef } from 'react';
 import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    Modal,
-    Dimensions,
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Modal,
+  Dimensions,
 } from 'react-native';
+import { AppText as Text } from '@city-market/mobile-ui';
 import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { Check, X, MapPin } from 'lucide-react-native';

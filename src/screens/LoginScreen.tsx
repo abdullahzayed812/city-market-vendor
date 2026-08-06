@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
@@ -11,7 +10,15 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
-import { Mail, Lock, Store, ChevronRight, Eye, EyeOff } from 'lucide-react-native';
+import { AppText as Text } from '@city-market/mobile-ui';
+import {
+  Mail,
+  Lock,
+  Store,
+  ChevronRight,
+  Eye,
+  EyeOff,
+} from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../theme';
 import { useLoginLogic } from '../hooks/useLoginLogic';
@@ -67,17 +74,30 @@ const LoginScreen = () => {
             </View>
 
             <View style={styles.form}>
-              <View style={[styles.inputLabelContainer, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
+              <View
+                style={[
+                  styles.inputLabelContainer,
+                  // { alignItems: isRTL ? 'flex-end' : 'flex-start' },
+                ]}
+              >
                 <Text style={styles.inputLabel}>{t('auth.email')}</Text>
               </View>
-              <View style={[styles.inputWrapper, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+              <View
+                style={[
+                  styles.inputWrapper,
+                  { flexDirection: isRTL ? 'row-reverse' : 'row' },
+                ]}
+              >
                 <Mail
                   size={20}
                   color={theme.colors.textLight}
                   style={isRTL ? styles.inputIconAr : styles.inputIcon}
                 />
                 <TextInput
-                  style={[styles.input, { textAlign: isRTL ? 'right' : 'left' }]}
+                  style={[
+                    styles.input,
+                    { textAlign: isRTL ? 'right' : 'left' },
+                  ]}
                   placeholder={t('auth.email_placeholder')}
                   value={email}
                   onChangeText={setEmail}
@@ -87,26 +107,30 @@ const LoginScreen = () => {
                 />
               </View>
 
-              <View style={[styles.inputLabelContainer, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
+              <View
+                style={[
+                  styles.inputLabelContainer,
+                  // { alignItems: isRTL ? 'flex-end' : 'flex-start' },
+                ]}
+              >
                 <Text style={styles.inputLabel}>{t('auth.password')}</Text>
               </View>
-              <View style={[styles.inputWrapper, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-                <Lock
+              <View
+                style={[
+                  styles.inputWrapper,
+                  { flexDirection: isRTL ? 'row-reverse' : 'row' },
+                ]}
+              >
+                {/* <Lock
                   size={20}
                   color={theme.colors.textLight}
                   style={isRTL ? styles.inputIconAr : styles.inputIcon}
-                />
-                <TextInput
-                  style={[styles.input, { textAlign: isRTL ? 'right' : 'left' }]}
-                  placeholder={t('auth.password_placeholder')}
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                  placeholderTextColor={theme.colors.textLight}
-                />
+                /> */}
                 <TouchableOpacity
                   onPress={() => setShowPassword(v => !v)}
-                  accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                  accessibilityLabel={
+                    showPassword ? 'Hide password' : 'Show password'
+                  }
                 >
                   {showPassword ? (
                     <EyeOff size={20} color={theme.colors.textLight} />
@@ -114,6 +138,17 @@ const LoginScreen = () => {
                     <Eye size={20} color={theme.colors.textLight} />
                   )}
                 </TouchableOpacity>
+                <TextInput
+                  style={[
+                    styles.input,
+                    { textAlign: isRTL ? 'right' : 'left' },
+                  ]}
+                  placeholder={t('auth.password_placeholder')}
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  placeholderTextColor={theme.colors.textLight}
+                />
               </View>
 
               <TouchableOpacity
@@ -131,7 +166,9 @@ const LoginScreen = () => {
                     <ChevronRight
                       size={20}
                       color={theme.colors.white}
-                      style={{ transform: [{ rotate: isRTL ? '180deg' : '0deg' }] }}
+                      style={{
+                        transform: [{ rotate: isRTL ? '180deg' : '0deg' }],
+                      }}
                     />
                   </>
                 )}
@@ -141,12 +178,19 @@ const LoginScreen = () => {
             <View style={styles.quickLoginSection}>
               <View style={styles.quickLoginDivider}>
                 <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>{t('auth.quick_login_title')}</Text>
+                <Text style={styles.dividerText}>
+                  {t('auth.quick_login_title')}
+                </Text>
                 <View style={styles.dividerLine} />
               </View>
 
-              <View style={[styles.quickLoginGrid, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-                {quickVendors.map((v) => (
+              <View
+                style={[
+                  styles.quickLoginGrid,
+                  { flexDirection: isRTL ? 'row-reverse' : 'row' },
+                ]}
+              >
+                {quickVendors.map(v => (
                   <QuickLoginChip
                     key={v.email}
                     vendor={v}

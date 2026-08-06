@@ -1,14 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-    Modal,
-    View,
-    Text,
-    ScrollView,
-    StyleSheet,
-    TouchableOpacity,
-    TextInput,
-    Switch,
+  Modal,
+  View,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  Switch,
 } from 'react-native';
+import { AppText as Text } from '@city-market/mobile-ui';
 import { useTranslation } from 'react-i18next';
 import { ProposalType, type ProposeChangesDto } from '@city-market/shared';
 

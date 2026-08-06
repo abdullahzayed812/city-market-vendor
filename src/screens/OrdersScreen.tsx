@@ -1,13 +1,13 @@
 import React from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   FlatList,
   ActivityIndicator,
   TouchableOpacity,
   RefreshControl,
 } from 'react-native';
+import { AppText as Text } from '@city-market/mobile-ui';
 import { ShoppingBag, ChevronRight, Package, Clock, Timer } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../theme';
@@ -65,17 +65,22 @@ const OrderItem = React.memo(
               { backgroundColor: status.color + '15' },
             ]}
           >
-            <Text style={[styles.statusText, { color: status.color }]}>
+            <Text
+              style={[styles.statusText, { color: status.color }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              maxFontSizeMultiplier={1.2}
+            >
               {status.label}
             </Text>
           </View>
         </View>
 
         {item.status === VendorOrderStatus.PENDING && (
-          <CountdownBadge deadline={item.vendorConfirmationDeadline} label={t('orders.confirm_before', 'Confirm before')} />
+          <CountdownBadge deadline={item.vendorConfirmationDeadline} label={t('orders.confirm_before')} />
         )}
         {item.status === VendorOrderStatus.PROPOSAL_SENT && (
-          <CountdownBadge deadline={item.customerDecisionDeadline} label={t('orders.customer_deciding', 'Customer deciding')} />
+          <CountdownBadge deadline={item.customerDecisionDeadline} label={t('orders.customer_deciding')} />
         )}
 
         <View style={styles.divider} />
