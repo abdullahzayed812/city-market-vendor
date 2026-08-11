@@ -95,7 +95,7 @@ const ProfileScreen = () => {
               <ShieldCheck size={14} color={theme.colors.white} />
             </View>
           </View>
-          <Text style={styles.vendorName}>
+          <Text style={styles.vendorName} numberOfLines={2} adjustsFontSizeToFit>
             {vendor?.shopName || t('common.vendor')}
           </Text>
           <Text style={styles.vendorEmail}>{user?.email}</Text>
@@ -235,6 +235,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.secondary,
+    textAlign: 'center',
   },
   vendorEmail: { fontSize: 14, color: theme.colors.textLight, marginTop: 4 },
   idBadge: {
