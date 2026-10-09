@@ -22,6 +22,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '../theme';
 import { useLoginLogic } from '../hooks/useLoginLogic';
+import { DEMO_MODE, DEMO_PASSWORD } from '../config/demo';
 
 const QuickLoginChip = React.memo(({ vendor, onLogin, setEmail }: any) => (
   <TouchableOpacity
@@ -29,7 +30,7 @@ const QuickLoginChip = React.memo(({ vendor, onLogin, setEmail }: any) => (
     style={styles.quickLoginChip}
     onPress={() => {
       setEmail(vendor.email);
-      onLogin(vendor.email, 'password123');
+      onLogin(vendor.email, DEMO_PASSWORD);
     }}
   >
     <Text style={styles.quickLoginText}>{vendor.name}</Text>
@@ -175,31 +176,34 @@ const LoginScreen = () => {
               </TouchableOpacity>
             </View>
 
-            <View style={styles.quickLoginSection}>
-              <View style={styles.quickLoginDivider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>
-                  {t('auth.quick_login_title')}
-                </Text>
-                <View style={styles.dividerLine} />
-              </View>
+            {/* Seed-vendor shortcuts while DEMO_MODE is on (src/config/demo.ts) */}
+            {DEMO_MODE && (
+              <View style={styles.quickLoginSection}>
+                <View style={styles.quickLoginDivider}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>
+                    {t('auth.quick_login_title')}
+                  </Text>
+                  <View style={styles.dividerLine} />
+                </View>
 
-              <View
-                style={[
-                  styles.quickLoginGrid,
-                  { flexDirection: isRTL ? 'row-reverse' : 'row' },
-                ]}
-              >
-                {quickVendors.map(v => (
-                  <QuickLoginChip
-                    key={v.email}
-                    vendor={v}
-                    onLogin={handleLogin}
-                    setEmail={setEmail}
-                  />
-                ))}
+                <View
+                  style={[
+                    styles.quickLoginGrid,
+                    { flexDirection: isRTL ? 'row-reverse' : 'row' },
+                  ]}
+                >
+                  {quickVendors.map(v => (
+                    <QuickLoginChip
+                      key={v.email}
+                      vendor={v}
+                      onLogin={handleLogin}
+                      setEmail={setEmail}
+                    />
+                  ))}
+                </View>
               </View>
-            </View>
+            )}
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

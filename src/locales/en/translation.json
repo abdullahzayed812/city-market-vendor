@@ -35,7 +35,8 @@
     "unauthorized_vendor": "Unauthorized: Only vendors can access this app",
     "merchant_portal": "Authorized Merchant Portal",
     "quick_login_title": "Quick Login (Dev Mode)",
-    "quick_login_desc": "Select a seeded vendor"
+    "quick_login_desc": "Select a seeded vendor",
+    "demo_accounts": "Demo accounts"
   },
   "dashboard": {
     "title": "Dashboard",

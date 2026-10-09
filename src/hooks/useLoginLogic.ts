@@ -4,12 +4,14 @@ import Toast from 'react-native-toast-message';
 import { useAuth } from '../app/AuthContext';
 import { AuthService } from '../services/api/authService';
 import { UserRole } from '@city-market/shared';
+import { DEMO_MODE, DEMO_ACCOUNTS, DEMO_PASSWORD } from '../config/demo';
 
 export const useLoginLogic = () => {
   const { t, i18n } = useTranslation();
   const { signIn } = useAuth();
-  const [email, setEmail] = useState('supermarket1@citymarket.com');
-  const [password, setPassword] = useState('password123');
+  // Demo account prefilled while DEMO_MODE is on (see src/config/demo.ts)
+  const [email, setEmail] = useState(DEMO_MODE ? DEMO_ACCOUNTS[0].email : '');
+  const [password, setPassword] = useState(DEMO_MODE ? DEMO_PASSWORD : '');
   const [loading, setLoading] = useState(false);
   const isRTL = i18n.language === 'ar';
 

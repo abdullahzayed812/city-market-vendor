@@ -35,7 +35,8 @@
     "unauthorized_vendor": "غير مصرح: يمكن للتجار فقط الوصول إلى هذا التطبيق",
     "merchant_portal": "بوابة التجار المعتمدة",
     "quick_login_title": "الدخول السريع (وضع التطوير)",
-    "quick_login_desc": "اختر متجراً للدخول الفوري"
+    "quick_login_desc": "اختر متجراً للدخول الفوري",
+    "demo_accounts": "حسابات تجريبية"
   },
   "dashboard": {
     "title": "لوحة التحكم",
