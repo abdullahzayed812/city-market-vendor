@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import Toast from 'react-native-toast-message';
 import { useOrderDetails } from './useOrderDetails';
 import { useSlaCountdown } from './useSlaCountdown';
 import {
@@ -14,6 +15,7 @@ export const useOrderDetailsLogic = (orderId: string) => {
   const {
     order,
     isLoading,
+    error,
     refetch,
     isRefetching,
     acceptOrder,
@@ -59,6 +61,7 @@ export const useOrderDetailsLogic = (orderId: string) => {
 
   const submitProposals = useCallback(() => {
     const proposals: ProposeChangesDto[] = [];
+    let invalidWeight = false;
 
     order?.items.forEach((item: any) => {
       const data = proposalData[item.id];
@@ -79,7 +82,11 @@ export const useOrderDetailsLogic = (orderId: string) => {
           });
         }
       } else if (item.requestedWeightGrams && data.newWeightKg) {
-        const newWeightGrams = Math.round(parseFloat(data.newWeightKg) * 1000);
+        const newWeightGrams = Math.round(parseFloat(data.newWeightKg.replace(',', '.')) * 1000);
+        if (!Number.isFinite(newWeightGrams) || newWeightGrams <= 0) {
+          invalidWeight = true;
+          return;
+        }
         if (
           newWeightGrams !==
           (item.actualWeightGrams || item.requestedWeightGrams)
@@ -94,6 +101,11 @@ export const useOrderDetailsLogic = (orderId: string) => {
       }
     });
 
+    if (invalidWeight) {
+      Toast.show({ type: 'error', text1: t('orders.invalid_weight') });
+      return;
+    }
+
     if (proposals.length > 0) {
       proposeChanges(proposals, {
         onSuccess: () => setIsProposalModalVisible(false),
@@ -101,7 +113,7 @@ export const useOrderDetailsLogic = (orderId: string) => {
     } else {
       setIsProposalModalVisible(false);
     }
-  }, [order, proposalData, proposeChanges]);
+  }, [order, proposalData, proposeChanges, t]);
 
   const canAccept = order?.status === VendorOrderStatus.PENDING;
   const isPreparing = order?.status === VendorOrderStatus.PREPARING;
@@ -120,6 +132,7 @@ export const useOrderDetailsLogic = (orderId: string) => {
     t,
     order,
     isLoading,
+    error,
     refetch,
     isRefetching,
     acceptOrder,

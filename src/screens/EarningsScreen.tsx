@@ -1,122 +1,148 @@
 import React from 'react';
-import { View, ScrollView, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
-import { AppText as Text } from '@city-market/mobile-ui';
+import { View, ScrollView, StyleSheet, RefreshControl } from 'react-native';
+import {
+  AppText as Text,
+  Card,
+  SectionHeader,
+  StatusBadge,
+  SummaryRow,
+  Divider,
+  EmptyState,
+  LoadingState,
+  palette,
+  space,
+} from '@city-market/mobile-ui';
 import { useTranslation } from 'react-i18next';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Wallet, CircleCheck, Hourglass, ReceiptText, CalendarRange } from 'lucide-react-native';
+import CustomHeader from '../components/common/CustomHeader';
+import QueryError from '../components/common/QueryError';
 import { useEarnings } from '../hooks/useEarnings';
+import { useFormat } from '../hooks/useFormat';
+
+const formatDate = (d: string | Date | null | undefined) => (d ? new Date(d).toLocaleDateString() : '—');
+/** Commission is a deduction; show it with a minus sign so it can't be read as income. */
+const deduction = (money: (n: number) => string, n: number | null | undefined) =>
+  n && n > 0 ? `− ${money(n)}` : money(n ?? 0);
 
 const EarningsScreen = () => {
-    const { t } = useTranslation();
-    const { pendingData, settlements, isLoading, isRefetching, refetch } = useEarnings();
+  const { t } = useTranslation();
+  const { money } = useFormat();
+  const { pendingData, settlements, isLoading, isRefetching, refetch, error } = useEarnings();
 
-    if (isLoading && !isRefetching) {
-        return (
-            <View style={styles.centered}>
-                <ActivityIndicator size="large" color="#4F46E5" />
-            </View>
-        );
-    }
+  const header = <CustomHeader title={t('financial.earnings_and_settlements')} subtitle={t('financial.track_payouts_subtitle')} />;
 
+  if (isLoading && !isRefetching) {
     return (
-        <ScrollView
-            style={styles.container}
-            refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
-        >
-            <View style={styles.header}>
-                <Text style={styles.title}>{t("financial.earnings_and_settlements")}</Text>
-                <Text style={styles.subtitle}>{t("financial.track_payouts_subtitle")}</Text>
-            </View>
-
-            <View style={styles.statsGrid}>
-                <View style={[styles.statCard, { borderLeftColor: '#F59E0B' }]}>
-                    <Text style={styles.statLabel}>{t("financial.unsettled_orders")}</Text>
-                    <Text style={styles.statValue}>{pendingData?.unsettledOrders || 0}</Text>
-                </View>
-                <View style={[styles.statCard, { borderLeftColor: '#10B981', backgroundColor: '#ECFDF5' }]}>
-                    <Text style={styles.statLabel}>{t("financial.net_payout")}</Text>
-                    <Text style={styles.statValue}>{t("common.currency")} {pendingData?.netPayout?.toLocaleString() || 0}</Text>
-                </View>
-            </View>
-
-            <View style={styles.historySection}>
-                <Text style={styles.sectionTitle}>{t("financial.settlement_history")}</Text>
-                {settlements.length === 0 ? (
-                    <View style={styles.emptyContainer}>
-                        <Text style={styles.emptyText}>{t("financial.no_settlement_history")}</Text>
-                    </View>
-                ) : (
-                    settlements.map((item: any) => (
-                        <View key={item.id} style={styles.settlementItem}>
-                            <View style={styles.settlementHeader}>
-                                <Text style={styles.settlementId}>#{item.id.split('-')[0]}</Text>
-                                <View style={[styles.statusBadge, item.status === 'PAID' ? styles.statusPaid : styles.statusPending]}>
-                                    <Text style={[styles.statusText, item.status === 'PAID' ? styles.statusTextPaid : styles.statusTextPending]}>
-                                        {item.status}
-                                    </Text>
-                                </View>
-                            </View>
-                            <Text style={styles.settlementPeriod}>
-                                {new Date(item.periodStart).toLocaleDateString()} - {new Date(item.periodEnd).toLocaleDateString()}
-                            </Text>
-                            <View style={styles.settlementFooter}>
-                                <Text style={styles.orderCount}>{t("financial.orders_count", { count: item.orderCount })}</Text>
-                                <Text style={styles.payoutAmount}>{t("common.currency")} {item.netPayout.toLocaleString()}</Text>
-                            </View>
-                        </View>
-                    ))
-                )}
-            </View>
-        </ScrollView>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        {header}
+        <LoadingState />
+      </SafeAreaView>
     );
+  }
+
+  if (error && !pendingData && settlements.length === 0) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        {header}
+        <QueryError error={error} onRetry={refetch} retrying={isRefetching} />
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      {header}
+      <ScrollView
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={palette.primary} colors={[palette.primary]} />
+        }
+      >
+        {/* Pending (not yet settled) — what the platform owes the vendor right now */}
+        <Card style={styles.pendingCard}>
+          <View style={styles.pendingHead}>
+            <View style={styles.pendingIcon}>
+              <Wallet size={22} color={palette.primary} />
+            </View>
+            <View style={styles.flex}>
+              <Text variant="subheading" color={palette.text}>{t('financial.awaiting_title')}</Text>
+              <Text variant="caption" color={palette.textMuted}>{t('financial.awaiting_hint')}</Text>
+            </View>
+          </View>
+          <SummaryRow label={t('financial.unsettled_orders')} value={String(pendingData?.unsettledOrders ?? 0)} />
+          <SummaryRow label={t('financial.sales')} value={money(pendingData?.totalRevenue ?? 0)} />
+          <SummaryRow label={t('financial.commission')} value={deduction(money, pendingData?.totalCommission)} emphasis="negative" />
+          <Divider />
+          <SummaryRow label={t('financial.net')} value={money(pendingData?.netPayout ?? 0)} emphasis="total" />
+          {pendingData?.oldestUnsettledOrderDate ? (
+            <Text variant="caption" color={palette.textMuted} style={styles.note}>
+              {t('financial.oldest_unsettled', { date: formatDate(pendingData.oldestUnsettledOrderDate) })}
+            </Text>
+          ) : null}
+        </Card>
+
+        <SectionHeader title={t('financial.settlement_history')} icon={ReceiptText} style={styles.sectionGap} />
+        {settlements.length === 0 ? (
+          <Card>
+            <EmptyState icon={ReceiptText} title={t('financial.no_settlement_history')} compact />
+          </Card>
+        ) : (
+          settlements.map((item: any) => {
+            const paid = item.status === 'PAID';
+            return (
+              <Card key={item.id} style={styles.settlement}>
+                <View style={styles.settlementHead}>
+                  <View style={styles.periodRow}>
+                    <CalendarRange size={16} color={palette.textMuted} />
+                    <Text variant="label" color={palette.text} style={styles.flexShrink}>
+                      {formatDate(item.periodStart)} – {formatDate(item.periodEnd)}
+                    </Text>
+                  </View>
+                  <StatusBadge
+                    size="sm"
+                    tone={paid ? 'success' : 'warning'}
+                    icon={paid ? CircleCheck : Hourglass}
+                    label={paid ? t('financial.status_paid') : t('financial.status_pending')}
+                  />
+                </View>
+                <Text variant="caption" color={palette.textMuted}>
+                  {t('financial.orders_count', { count: item.orderCount })}
+                  {paid && item.settledAt ? ` · ${t('financial.paid_on', { date: formatDate(item.settledAt) })}` : ''}
+                </Text>
+                <Divider spacing={space.sm} />
+                <SummaryRow label={t('financial.sales')} value={money(item.totalVendorRevenue)} />
+                <SummaryRow label={t('financial.commission')} value={deduction(money, item.totalCommission)} emphasis="negative" />
+                <SummaryRow label={t('financial.net')} value={money(item.netPayout)} emphasis={paid ? 'positive' : 'normal'} />
+              </Card>
+            );
+          })
+        )}
+      </ScrollView>
+    </SafeAreaView>
+  );
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#F9FAFB' },
-    centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    header: { padding: 20, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#E5E7EB' },
-    title: { fontSize: 24, fontWeight: 'bold', color: '#111827' },
-    subtitle: { fontSize: 14, color: '#6B7280', marginTop: 4 },
-    statsGrid: { padding: 20, flexDirection: 'row', gap: 12 },
-    statCard: {
-        flex: 1,
-        backgroundColor: '#FFFFFF',
-        padding: 16,
-        borderRadius: 12,
-        borderLeftWidth: 4,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 2
-    },
-    statLabel: { fontSize: 12, color: '#6B7280', marginBottom: 8 },
-    statValue: { fontSize: 18, fontWeight: 'bold', color: '#111827' },
-    historySection: { padding: 20 },
-    sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#111827', marginBottom: 16 },
-    settlementItem: {
-        backgroundColor: '#FFFFFF',
-        padding: 16,
-        borderRadius: 12,
-        marginBottom: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 2
-    },
-    settlementHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-    settlementId: { fontSize: 12, color: '#9CA3AF' },
-    statusBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 },
-    statusPaid: { backgroundColor: '#D1FAE5' },
-    statusPending: { backgroundColor: '#FEF3C7' },
-    statusText: { fontSize: 10, fontWeight: 'bold' },
-    statusTextPaid: { color: '#065F46' },
-    statusTextPending: { color: '#92400E' },
-    settlementPeriod: { fontSize: 14, color: '#374151', marginBottom: 12 },
-    settlementFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, borderTopWidth: 1, borderTopColor: '#F3F4F6' },
-    orderCount: { fontSize: 13, color: '#6B7280' },
-    payoutAmount: { fontSize: 16, fontWeight: 'bold', color: '#111827' },
-    emptyContainer: { padding: 40, alignItems: 'center' },
-    emptyText: { color: '#9CA3AF', fontSize: 14 }
+  container: { flex: 1, backgroundColor: palette.background },
+  content: { padding: space.lg, gap: space.md, paddingBottom: space.huge },
+  flex: { flex: 1 },
+  flexShrink: { flexShrink: 1 },
+  sectionGap: { marginTop: space.md, marginBottom: 0 },
+  pendingCard: { borderColor: palette.primaryMuted, borderWidth: 1 },
+  pendingHead: { flexDirection: 'row', alignItems: 'center', gap: space.md, marginBottom: space.md },
+  pendingIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: palette.primarySoft,
+  },
+  note: { marginTop: space.sm },
+  settlement: { gap: space.xs },
+  settlementHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm },
+  periodRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs, flexShrink: 1 },
 });
 
 export default EarningsScreen;

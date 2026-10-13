@@ -16,7 +16,9 @@ import ProductsScreen from '../screens/ProductsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import ReviewsScreen from '../screens/ReviewsScreen';
 import EarningsScreen from '../screens/EarningsScreen';
-import { theme } from '../theme';
+import { palette } from '@city-market/mobile-ui';
+import { VendorOrderStatus } from '@city-market/shared';
+import { useOrders } from '../hooks/useOrders';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -37,17 +39,18 @@ const ProfileStack = () => (
 
 const MainTabNavigator = () => {
   const { t } = useTranslation();
+  const { orders } = useOrders();
+  const pendingCount = orders.filter(o => o.status === VendorOrderStatus.PENDING).length;
 
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: theme.colors.primary,
-        tabBarInactiveTintColor: theme.colors.textMuted,
-        tabBarLabelStyle: { fontSize: 14, fontWeight: 'bold' },
-        tabBarStyle: { height: 75, paddingTop: 15 },
-        headerStyle: { backgroundColor: theme.colors.white },
-        headerTitleStyle: { fontWeight: 'bold', color: theme.colors.primary },
+        tabBarActiveTintColor: palette.primary,
+        tabBarInactiveTintColor: palette.textMuted,
+        tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
+        tabBarStyle: { backgroundColor: palette.surface, borderTopColor: palette.border },
+        tabBarBadgeStyle: { backgroundColor: palette.warning, color: palette.white, fontSize: 11 },
       }}
     >
       <Tab.Screen
@@ -66,6 +69,7 @@ const MainTabNavigator = () => {
         options={{
           title: t('orders.title'),
           headerShown: false,
+          tabBarBadge: pendingCount > 0 ? pendingCount : undefined,
           tabBarIcon: ({ color, size }) => (
             <ShoppingBag size={size} color={color} />
           ),

@@ -1,286 +1,208 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, StyleSheet, FlatList, ActivityIndicator, RefreshControl, ScrollView } from 'react-native';
 import {
-  View,
-  StyleSheet,
-  FlatList,
-  ActivityIndicator,
-  TouchableOpacity,
-  RefreshControl,
-} from 'react-native';
-import { AppText as Text } from '@city-market/mobile-ui';
-import { ShoppingBag, ChevronRight, Package, Clock, Timer } from 'lucide-react-native';
+  AppText as Text,
+  Card,
+  Chip,
+  StatusBadge,
+  EmptyState,
+  LoadingState,
+  ForwardIcon,
+  palette,
+  radii,
+  space,
+  shortId,
+} from '@city-market/mobile-ui';
+import { ShoppingBag, Package, Timer } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { theme } from '../theme';
+import type { TFunction } from 'i18next';
 import CustomHeader from '../components/common/CustomHeader';
+import QueryError from '../components/common/QueryError';
 import { useOrdersLogic } from '../hooks/useOrdersLogic';
 import { useSlaCountdown } from '../hooks/useSlaCountdown';
+import { useFormat } from '../hooks/useFormat';
 import { VendorOrderStatus } from '@city-market/shared';
+import { vendorOrderStatusMeta, vendorOrderStatusKey, type OrderFilter } from '../features/orderStatus';
 
-const CountdownBadge = ({ deadline, label, isUrgent }: { deadline?: Date | string | null; label: string; isUrgent?: boolean }) => {
+const FILTERS: OrderFilter[] = ['action', 'active', 'done', 'all'];
+
+const Countdown = ({ deadline, label }: { deadline?: Date | string | null; label: string }) => {
   const { remainingSeconds, isExpired, isWarning, formattedTime } = useSlaCountdown(deadline);
   if (!deadline || isExpired || remainingSeconds === 0) return null;
-  const urgent = isUrgent || isWarning;
+  const fg = isWarning ? palette.error : palette.warning;
   return (
-    <View style={[styles.countdownBanner, urgent && { backgroundColor: '#fee2e2' }]}>
-      <Timer size={13} color={urgent ? '#dc2626' : '#b45309'} />
-      <Text style={[styles.countdownText, urgent && { color: '#dc2626' }]}>
-        {label}: {formattedTime}
-      </Text>
+    <View style={[styles.countdown, { backgroundColor: isWarning ? palette.errorSoft : palette.warningSoft }]}>
+      <Timer size={14} color={fg} />
+      <Text variant="caption" color={fg} style={styles.flexShrink}>{label}</Text>
+      <Text variant="label" color={fg} style={styles.tabular}>{formattedTime}</Text>
     </View>
   );
 };
 
-const OrderItem = React.memo(
-  ({ item, getStatusConfig, t, navigation, isRTL }: any) => {
-    const status = getStatusConfig(item.status);
+interface OrderItemProps {
+  item: any;
+  t: TFunction;
+  money: (n: number | null | undefined) => string;
+  onOpen: (id: string) => void;
+}
 
-    return (
-      <TouchableOpacity
-        style={styles.orderCard}
-        activeOpacity={0.9}
-        onPress={() =>
-          navigation.navigate('OrderDetails', { orderId: item.id })
-        }
-      >
-        <View style={styles.orderHeader}>
-          <View style={styles.idGroup}>
-            <View style={styles.iconCircle}>
-              <ShoppingBag size={18} color={theme.colors.primary} />
-            </View>
-            <View>
-              <Text style={styles.orderId}>
-                {t('orders.order_id')} #{item.id.slice(-6).toUpperCase()}
-              </Text>
-              <View style={styles.timeRow}>
-                <Clock size={12} color={theme.colors.textLight} />
-                <Text style={styles.dateText}>
-                  {new Date(item.createdAt).toLocaleDateString()}
-                </Text>
-              </View>
-            </View>
-          </View>
-          <View
-            style={[
-              styles.statusBadge,
-              { backgroundColor: status.color + '15' },
-            ]}
-          >
-            <Text
-              style={[styles.statusText, { color: status.color }]}
-              numberOfLines={1}
-              adjustsFontSizeToFit
-              maxFontSizeMultiplier={1.2}
-            >
-              {status.label}
-            </Text>
-          </View>
+const OrderItem = React.memo(({ item, t, money, onOpen }: OrderItemProps) => {
+  const meta = vendorOrderStatusMeta(item.status);
+  const itemsCount = item.items?.length ?? 0;
+  const created = new Date(item.createdAt);
+  return (
+    <Card
+      appearance="raised"
+      onPress={() => onOpen(item.id)}
+      accessibilityLabel={`${t('orders.order_id')} ${shortId(item.id)}`}
+      style={[styles.card, item.status === VendorOrderStatus.PENDING && styles.cardUrgent]}
+    >
+      <View style={styles.row}>
+        <View style={styles.flexShrink}>
+          <Text variant="subheading" color={palette.text}>
+            {t('orders.order_id')} {shortId(item.id)}
+          </Text>
+          <Text variant="caption" color={palette.textMuted}>
+            {created.toLocaleDateString()} · {created.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </Text>
         </View>
+        <StatusBadge label={t(vendorOrderStatusKey(item.status))} tone={meta.tone} icon={meta.icon} />
+      </View>
 
-        {item.status === VendorOrderStatus.PENDING && (
-          <CountdownBadge deadline={item.vendorConfirmationDeadline} label={t('orders.confirm_before')} />
-        )}
-        {item.status === VendorOrderStatus.PROPOSAL_SENT && (
-          <CountdownBadge deadline={item.customerDecisionDeadline} label={t('orders.customer_deciding')} />
-        )}
+      {item.status === VendorOrderStatus.PENDING && (
+        <Countdown deadline={item.vendorConfirmationDeadline} label={t('orders.confirm_before')} />
+      )}
+      {item.status === VendorOrderStatus.PROPOSAL_SENT && (
+        <Countdown deadline={item.customerDecisionDeadline} label={t('orders.customer_deciding')} />
+      )}
 
-        <View style={styles.divider} />
-
-        <View style={styles.orderDetails}>
-          <View style={styles.detailItem}>
-            <Package size={16} color={theme.colors.textMuted} />
-            <Text style={styles.detailText}>
-              {item.items?.length || 0} {t('products.title')}
-            </Text>
-          </View>
-          <View>
-            <Text style={styles.totalLabel}>{t('orders.total_price')}</Text>
-            <Text style={styles.totalAmount}>
-              {t('common.currency')} {item.totalAmount?.toFixed(2)}
-            </Text>
-          </View>
+      <View style={[styles.row, styles.footer]}>
+        <View style={styles.itemsRow}>
+          <Package size={16} color={palette.textMuted} />
+          <Text variant="caption" color={palette.textSecondary}>{t('orders.items_count', { count: itemsCount })}</Text>
         </View>
-
-        <View style={styles.cardFooter}>
-          <Text style={styles.viewDetailsText}>{t('common.view_details')}</Text>
-          <ChevronRight
-            size={16}
-            color={theme.colors.primary}
-            style={isRTL && { transform: [{ rotate: '180deg' }] }}
-          />
+        <View style={styles.totalRow}>
+          <Text variant="heading" color={palette.text} style={styles.tabular}>{money(item.totalAmount)}</Text>
+          <ForwardIcon size={18} color={palette.textMuted} />
         </View>
-      </TouchableOpacity>
-    );
-  },
-);
+      </View>
+    </Card>
+  );
+});
 
-const OrdersScreen = ({ navigation }: any) => {
+const OrdersScreen = ({ navigation, route }: any) => {
+  const requested: OrderFilter | undefined = route?.params?.filter;
+  const [filter, setFilter] = useState<OrderFilter>(requested ?? 'all');
+  // The dashboard deep-links into a specific filter.
+  useEffect(() => {
+    if (requested) setFilter(requested);
+  }, [requested]);
+
   const {
     t,
-    isRTL,
     orders,
+    counts,
     isLoading,
+    error,
     refetch,
     isRefetching,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    getStatusConfig,
-  } = useOrdersLogic();
+  } = useOrdersLogic(filter);
+  const { money } = useFormat();
 
+  const openOrder = useCallback((id: string) => navigation.navigate('OrderDetails', { orderId: id }), [navigation]);
+  const loadMore = () => {
+    if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+  };
+
+  let body: React.ReactNode;
   if (isLoading) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
-    );
-  }
-
-  return (
-    <SafeAreaView style={styles.container}>
-      <CustomHeader title={t('orders.title')} />
+    body = <LoadingState />;
+  } else if (error && counts.all === 0) {
+    body = <QueryError error={error} onRetry={refetch} retrying={isRefetching} />;
+  } else {
+    body = (
       <FlatList
         data={orders}
-        renderItem={({ item }) => (
-          <OrderItem
-            item={item}
-            getStatusConfig={getStatusConfig}
-            t={t}
-            navigation={navigation}
-            isRTL={isRTL}
-          />
-        )}
+        renderItem={({ item }) => <OrderItem item={item} t={t} money={money} onOpen={openOrder} />}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={refetch}
-            tintColor={theme.colors.primary}
-          />
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={palette.primary} colors={[palette.primary]} />
         }
-        onEndReached={() => {
-          if (hasNextPage && !isFetchingNextPage) fetchNextPage();
-        }}
+        onEndReached={loadMore}
         onEndReachedThreshold={0.3}
         ListFooterComponent={
-          isFetchingNextPage ? (
-            <ActivityIndicator
-              style={{ paddingVertical: 16 }}
-              color={theme.colors.primary}
-            />
-          ) : null
+          isFetchingNextPage ? <ActivityIndicator style={styles.footerSpinner} color={palette.primary} /> : null
         }
         ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <ShoppingBag size={80} color={theme.colors.border} />
-            <Text style={styles.emptyText}>{t('orders.no_orders')}</Text>
-          </View>
+          // Filters apply to loaded pages only; offer to load more instead of claiming there are none.
+          <EmptyState
+            icon={ShoppingBag}
+            title={filter === 'all' ? t('orders.no_orders') : t('orders.no_orders_filter')}
+            actionLabel={hasNextPage ? t('common.load_more') : undefined}
+            onAction={hasNextPage ? loadMore : undefined}
+          />
         }
       />
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <CustomHeader title={t('orders.title')} />
+      <View style={styles.filtersBar}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
+          {FILTERS.map(f => (
+            <Chip
+              key={f}
+              label={t(`orders.filter_${f}`)}
+              count={counts[f]}
+              selected={filter === f}
+              onPress={() => setFilter(f)}
+            />
+          ))}
+        </ScrollView>
+      </View>
+      {body}
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  listContent: { padding: theme.spacing.lg },
-  orderCard: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.xl,
-    padding: theme.spacing.lg,
-    marginBottom: theme.spacing.md,
-    ...theme.shadows.card,
+  container: { flex: 1, backgroundColor: palette.background },
+  filtersBar: {
+    backgroundColor: palette.surface,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: palette.border,
   },
-  orderHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 16,
-  },
-  idGroup: { flexDirection: 'row', alignItems: 'center' },
-  iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: theme.colors.primaryLight,
-    justifyContent: 'center',
+  filters: { paddingHorizontal: space.lg, paddingVertical: space.sm, gap: space.sm },
+  listContent: { padding: space.lg, gap: space.md, flexGrow: 1 },
+  card: { gap: space.md },
+  cardUrgent: { borderWidth: 1.5, borderColor: palette.warning },
+  row: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: space.sm },
+  footer: {
     alignItems: 'center',
-    marginEnd: 12,
+    paddingTop: space.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: palette.border,
   },
-  orderId: {
-    fontSize: 16,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.secondary,
-  },
-  timeRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
-  dateText: { fontSize: 12, color: theme.colors.textLight, marginStart: 4 },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: theme.radius.sm,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: theme.typography.weights.bold,
-    textTransform: 'capitalize',
-  },
-  countdownBanner: {
+  itemsRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
+  totalRow: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
+  countdown: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fef3c7',
-    borderRadius: theme.radius.md,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    marginBottom: 12,
-    gap: 6,
+    gap: space.sm,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
+    borderRadius: radii.sm,
   },
-  countdownText: {
-    fontSize: 12,
-    fontWeight: theme.typography.weights.semibold,
-    color: '#b45309',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: theme.colors.border,
-    marginBottom: 16,
-    opacity: 0.5,
-  },
-  orderDetails: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  detailItem: { flexDirection: 'row', alignItems: 'center' },
-  detailText: { fontSize: 14, color: theme.colors.textMuted, marginStart: 8 },
-  totalLabel: {
-    fontSize: 11,
-    color: theme.colors.textMuted,
-    textAlign: 'right',
-  },
-  totalAmount: {
-    fontSize: 18,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.success,
-    textAlign: 'right',
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: theme.colors.primaryLight,
-    padding: 12,
-    borderRadius: theme.radius.md,
-  },
-  viewDetailsText: {
-    fontSize: 13,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.primary,
-  },
-  emptyContainer: { alignItems: 'center', marginTop: 100 },
-  emptyText: { marginTop: 16, fontSize: 16, color: theme.colors.textMuted },
+  flexShrink: { flexShrink: 1 },
+  tabular: { fontVariant: ['tabular-nums'] },
+  footerSpinner: { paddingVertical: space.lg },
 });
 
 export default OrdersScreen;

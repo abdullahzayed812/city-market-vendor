@@ -13,6 +13,17 @@ export const AuthService = {
     });
     return response.data?.data;
   },
+  // Public signup: always a VENDOR account; the store application (and admin approval) comes next
+  register: async (credentials: { email: string; password: string }) => {
+    const deviceId = await getDeviceId();
+    const response = await apiClient.post<ApiResponse<any>>('/auth/register', {
+      ...credentials,
+      role: 'VENDOR',
+      deviceId,
+      platform: Platform.OS,
+    });
+    return response.data?.data;
+  },
   logout: async () => {
     const response = await apiClient.post<ApiResponse<any>>('/auth/logout');
     return response.data?.data;

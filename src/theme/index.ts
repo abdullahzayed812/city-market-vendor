@@ -1,20 +1,23 @@
+import { palette } from '@city-market/mobile-ui';
+
+// Values come from the shared CityMarket design tokens.
 export const theme = {
   colors: {
-    primary: '#7c3aed', // Vibrant Purple
-    primaryDark: '#6d28d9',
-    primaryLight: '#f5f3ff',
-    secondary: '#1e293b', // Deep Slate
-    background: '#f8fafc', // Light gray-blue
-    surface: '#ffffff',
-    error: '#ef4444',
-    success: '#10b981',
-    warning: '#f59e0b',
-    info: '#3b82f6',
-    text: '#1e293b',
-    textMuted: '#64748b',
-    textLight: '#94a3b8',
-    border: '#e2e8f0',
-    white: '#ffffff',
+    primary: palette.primary,
+    primaryDark: palette.primaryPressed,
+    primaryLight: palette.primarySoft,
+    secondary: palette.text,
+    background: palette.background,
+    surface: palette.surface,
+    error: palette.error,
+    success: palette.success,
+    warning: palette.warning,
+    info: palette.info,
+    text: palette.text,
+    textMuted: palette.textMuted,
+    textLight: palette.textDisabled,
+    border: palette.border,
+    white: palette.white,
   },
   spacing: {
     xs: 4,
@@ -58,14 +61,14 @@ export const theme = {
       elevation: 3,
     },
     medium: {
-      shadowColor: '#7c3aed',
+      shadowColor: '#14231A',
       shadowOffset: { width: 0, height: 8 },
       shadowOpacity: 0.12,
       shadowRadius: 20,
       elevation: 8,
     },
     card: {
-      shadowColor: '#1e293b',
+      shadowColor: '#14231A',
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.05,
       shadowRadius: 8,

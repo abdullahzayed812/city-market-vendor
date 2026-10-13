@@ -4,6 +4,7 @@ import { ProductService } from '../services/api/productService';
 import { useAuth } from '../app/AuthContext';
 import { useSocket } from '../app/SocketContext';
 import Toast from 'react-native-toast-message';
+import { apiErrorMessage } from '@city-market/mobile-ui';
 import { useTranslation } from 'react-i18next';
 import type { BulkAddVendorProductsFromGlobalItem } from '@city-market/shared';
 
@@ -39,6 +40,7 @@ export const useProducts = (
   const {
     data: vendorProductsData,
     isLoading: vendorProductsLoading,
+    error: vendorProductsError,
     refetch: refetchVendorProducts,
     isRefetching: isRefetchingVendorProducts,
     fetchNextPage,
@@ -75,8 +77,8 @@ export const useProducts = (
       invalidateVendorProducts();
       Toast.show({ type: 'success', text1: t('common.save'), text2: t('inventory.stock_updated') });
     },
-    onError: (error: any) => {
-      Toast.show({ type: 'error', text1: t('common.error'), text2: error.message });
+    onError: (error: unknown) => {
+      Toast.show({ type: 'error', text1: t('common.action_failed'), text2: apiErrorMessage(error) });
     },
   });
 
@@ -87,8 +89,8 @@ export const useProducts = (
       invalidateVendorProducts();
       Toast.show({ type: 'success', text1: t('common.save'), text2: t('inventory.price_updated') });
     },
-    onError: (error: any) => {
-      Toast.show({ type: 'error', text1: t('common.error'), text2: error.message });
+    onError: (error: unknown) => {
+      Toast.show({ type: 'error', text1: t('common.action_failed'), text2: apiErrorMessage(error) });
     },
   });
 
@@ -138,6 +140,7 @@ export const useProducts = (
     products: vendorProductsData?.pages.flatMap(p => p?.data ?? []) ?? [],
     productsTotal: vendorProductsData?.pages[0]?.total || 0,
     isLoading: categoriesLoading || vendorProductsLoading,
+    error: vendorProductsError,
     isGlobalProductsLoading: globalProductsLoading,
     refetch: refetchVendorProducts,
     isRefetching: isRefetchingVendorProducts,

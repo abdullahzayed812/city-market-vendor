@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { ShopStatus } from '@city-market/shared';
 import { useOrders } from './useOrders';
@@ -13,6 +14,7 @@ export const useDashboard = () => {
   const {
     profile,
     isLoading: profileLoading,
+    error: profileError,
     toggleStatus,
     isUpdatingStatus,
   } = useVendorProfile();
@@ -36,6 +38,25 @@ export const useDashboard = () => {
       })
       .reduce((acc, o) => acc + (o.totalAmount || 0), 0) || 0
     , [orders]);
+
+  const pendingOrdersCount = useMemo(() =>
+    orders?.filter(o => o.status === 'PENDING').length || 0
+    , [orders]);
+
+  const queryClient = useQueryClient();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const refresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all(
+        ['vendorProfile', 'vendor-orders', 'pendingEarnings'].map(key =>
+          queryClient.refetchQueries({ queryKey: [key] }),
+        ),
+      );
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [queryClient]);
 
   const totalRevenue = pendingData?.totalRevenue || 0;
   const platformCommission = pendingData?.totalCommission || 0;
@@ -73,7 +94,12 @@ export const useDashboard = () => {
     netEarnings,
     productsCount: productsTotal,
     isOpen,
+    isSuspended,
     statusLabel,
     statusColor,
+    pendingOrdersCount,
+    profileError,
+    refresh,
+    isRefreshing,
   };
 };

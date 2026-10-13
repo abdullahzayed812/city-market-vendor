@@ -1,47 +1,40 @@
 import React from 'react';
+import { View, StyleSheet, ScrollView, Switch, StatusBar, Pressable, RefreshControl } from 'react-native';
 import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Switch,
-  ActivityIndicator,
-  StatusBar,
-} from 'react-native';
-import { AppText as Text } from '@city-market/mobile-ui';
-import { theme } from '../theme';
+  AppText as Text,
+  Card,
+  SectionHeader,
+  StatusBadge,
+  SummaryRow,
+  Divider,
+  LoadingState,
+  ForwardIcon,
+  palette,
+  radii,
+  space,
+} from '@city-market/mobile-ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  ShoppingCart,
-  DollarSign,
-  Package,
-  Activity,
-  TrendingUp,
-  Wallet,
-} from 'lucide-react-native';
+import { ShoppingCart, Package, Banknote, Hourglass, Store, CircleCheck, Ban, Wallet, CalendarDays, type LucideIcon } from 'lucide-react-native';
 import CustomHeader from '../components/common/CustomHeader';
+import QueryError from '../components/common/QueryError';
 import { useDashboard } from '../hooks/useDashboard';
+import { useFormat } from '../hooks/useFormat';
 
-const StatCard = React.memo(
-  ({ icon: Icon, label, value, color, trend }: any) => (
-    <View style={styles.statCard}>
-      <View style={[styles.iconContainer, { backgroundColor: color + '10' }]}>
-        <Icon size={22} color={color} />
-      </View>
-      <View style={styles.statInfo}>
-        <Text style={styles.statValue}>{value}</Text>
-        <Text style={styles.statLabel}>{label}</Text>
-        {trend && (
-          <View style={styles.trendContainer}>
-            <TrendingUp size={12} color={theme.colors.success} />
-            <Text style={styles.trendText}>{trend}</Text>
-          </View>
-        )}
-      </View>
+const StatTile = ({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) => (
+  <View style={styles.tile}>
+    <View style={styles.tileIcon}>
+      <Icon size={18} color={palette.primary} />
     </View>
-  ),
+    <Text variant="heading" color={palette.text} numberOfLines={1} adjustsFontSizeToFit style={styles.tabular}>
+      {value}
+    </Text>
+    <Text variant="caption" color={palette.textMuted} numberOfLines={2}>
+      {label}
+    </Text>
+  </View>
 );
 
-const DashboardScreen = () => {
+const DashboardScreen = ({ navigation }: any) => {
   const {
     t,
     profile,
@@ -55,206 +48,234 @@ const DashboardScreen = () => {
     netEarnings,
     productsCount,
     isOpen,
+    isSuspended,
     statusLabel,
-    statusColor,
+    pendingOrdersCount,
+    profileError,
+    refresh,
+    isRefreshing,
   } = useDashboard();
+  const { money } = useFormat();
 
   if (profileLoading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <CustomHeader title={t('dashboard.title')} />
+        <LoadingState />
+      </SafeAreaView>
     );
   }
 
+  if (!profile) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <CustomHeader title={t('dashboard.title')} />
+        <QueryError error={profileError} onRetry={refresh} retrying={isRefreshing} />
+      </SafeAreaView>
+    );
+  }
+
+  const openOrders = () => navigation.navigate('OrdersTab', { screen: 'OrdersList', params: { filter: 'action' } });
+
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
-      <CustomHeader title={t('dashboard.title')} />
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <StatusBar barStyle="dark-content" backgroundColor={palette.surface} />
+      <CustomHeader title={profile.shopName || t('common.vendor')} subtitle={t('dashboard.title')} />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={isRefreshing} onRefresh={refresh} tintColor={palette.primary} colors={[palette.primary]} />
+        }
       >
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.welcomeText}>{t('common.welcome_back')}</Text>
-            <Text style={styles.vendorName}>
-              {profile?.shopName || t('common.vendor')}
-            </Text>
+        {/* Shop open/closed: the control that most affects incoming orders */}
+        <Card style={[styles.statusCard, isOpen ? styles.statusOpen : styles.statusClosed]}>
+          <View style={[styles.statusIcon, { backgroundColor: isOpen ? palette.success : palette.neutral }]}>
+            {isSuspended ? <Ban size={22} color={palette.white} /> : <Store size={22} color={palette.white} />}
           </View>
-          <View
-            style={[
-              styles.statusIndicator,
-              {
-                backgroundColor: statusColor + '15',
-              },
-            ]}
-          >
-            <View
-              style={[
-                styles.statusDot,
-                {
-                  backgroundColor: statusColor,
-                },
-              ]}
-            />
-            <Text style={[styles.statusIndicatorText, { color: statusColor }]}>
-              {statusLabel}
-            </Text>
-          </View>
-        </View>
-
-        <View style={styles.statusSection}>
-          <View style={styles.statusInfo}>
-            <Activity size={20} color={theme.colors.primary} />
-            <View style={styles.statusTextContainer}>
-              <Text style={styles.statusText}>
-                {t('dashboard.shop_status')}
-              </Text>
-              <Text style={styles.statusSubtext}>
-                {t('dashboard.control_visibility')}
-              </Text>
+          <View style={styles.flex}>
+            <View style={styles.statusTitleRow}>
+              <Text variant="subheading" color={palette.text}>{t('dashboard.shop_status')}</Text>
+              <StatusBadge
+                label={statusLabel}
+                tone={isOpen ? 'success' : isSuspended ? 'warning' : 'neutral'}
+                icon={isOpen ? CircleCheck : isSuspended ? Ban : undefined}
+                size="sm"
+              />
             </View>
+            <Text variant="caption" color={palette.textSecondary}>
+              {isSuspended ? t('dashboard.suspended_hint') : isOpen ? t('dashboard.shop_open_hint') : t('dashboard.shop_closed_hint')}
+            </Text>
           </View>
           <Switch
             value={isOpen}
             onValueChange={toggleStatus}
-            trackColor={{
-              true: theme.colors.primary + '30',
-              false: theme.colors.border,
-            }}
-            thumbColor={isOpen ? theme.colors.primary : theme.colors.white}
-            disabled={isUpdatingStatus}
+            disabled={isUpdatingStatus || isSuspended}
+            trackColor={{ true: palette.primaryMuted, false: palette.borderStrong }}
+            thumbColor={isOpen ? palette.primary : palette.white}
+            accessibilityLabel={t('dashboard.shop_status')}
           />
+        </Card>
+
+        {/* Urgent work first */}
+        <Pressable
+          onPress={openOrders}
+          accessibilityRole="button"
+          style={({ pressed }) => [styles.actionCard, pendingOrdersCount > 0 && styles.actionCardUrgent, pressed && styles.pressed]}
+        >
+          <View style={[styles.actionCount, pendingOrdersCount > 0 && styles.actionCountUrgent]}>
+            {pendingOrdersCount > 0 ? (
+              <Text variant="title" color={palette.white} style={styles.tabular}>{pendingOrdersCount}</Text>
+            ) : (
+              <Hourglass size={22} color={palette.textMuted} />
+            )}
+          </View>
+          <View style={styles.flex}>
+            <Text variant="subheading" color={palette.text}>
+              {pendingOrdersCount > 0 ? t('dashboard.needs_action') : t('dashboard.no_action_needed')}
+            </Text>
+            {pendingOrdersCount > 0 ? (
+              <Text variant="caption" color={palette.warning}>{t('dashboard.needs_action_hint')}</Text>
+            ) : null}
+          </View>
+          <ForwardIcon size={20} color={palette.textMuted} />
+        </Pressable>
+
+        <SectionHeader title={t('dashboard.operations')} style={styles.sectionGap} />
+        <View style={styles.tiles}>
+          <StatTile icon={ShoppingCart} label={t('dashboard.active_orders')} value={String(activeOrdersCount)} />
+          <StatTile icon={CalendarDays} label={t('dashboard.today_sales')} value={money(todaySales)} />
+          <StatTile icon={Package} label={t('dashboard.total_products')} value={String(productsCount)} />
         </View>
 
-        <View style={styles.statsGrid}>
-          <StatCard
-            icon={ShoppingCart}
-            label={t('dashboard.active_orders')}
-            value={activeOrdersCount.toString()}
-            color={theme.colors.primary}
-            trend={`+2 ${t('common.today')}`}
+        <SectionHeader
+          title={t('dashboard.awaiting_settlement')}
+          icon={Wallet}
+          actionLabel={t('common.view_details')}
+          onAction={() => navigation.navigate('EarningsTab')}
+          style={styles.sectionGap}
+        />
+        <Card>
+          <Text variant="caption" color={palette.textMuted} style={styles.hint}>
+            {t('dashboard.awaiting_settlement_hint')}
+          </Text>
+          <SummaryRow label={t('dashboard.unsettled_sales')} value={money(totalRevenue)} />
+          <SummaryRow
+            label={t('dashboard.platform_commission')}
+            value={platformCommission > 0 ? `− ${money(platformCommission)}` : money(platformCommission)}
+            emphasis="negative"
           />
-          <StatCard
-            icon={DollarSign}
-            label={t('dashboard.today_sales')}
-            value={`${t('common.currency')} ${todaySales.toFixed(2)}`}
-            color={theme.colors.success}
-            trend={`+8% ${t('common.vs_avg')}`}
+          <Divider />
+          <SummaryRow
+            label={t('dashboard.net_due')}
+            value={money(netEarnings)}
+            emphasis="total"
+            trailing={<Banknote size={20} color={palette.primary} />}
           />
-          <StatCard
-            icon={DollarSign}
-            label={t('dashboard.total_revenue')}
-            value={`${t('common.currency')} ${totalRevenue.toFixed(2)}`}
-            color={theme.colors.primary}
-          />
-          <StatCard
-            icon={TrendingUp}
-            label={`${t('dashboard.platform_commission')} (${totalRevenue > 0 ? ((platformCommission / totalRevenue) * 100).toFixed(1) : 0}%)`}
-            value={`-${t('common.currency')} ${platformCommission.toFixed(2)}`}
-            color={theme.colors.error}
-          />
-          <StatCard
-            icon={Wallet}
-            label={t('dashboard.net_earnings')}
-            value={`${t('common.currency')} ${netEarnings.toFixed(2)}`}
-            color={theme.colors.success}
-          />
-          <StatCard
-            icon={Package}
-            label={t('dashboard.total_products')}
-            value={productsCount.toString()}
-            color={theme.colors.info}
-          />
-        </View>
+        </Card>
       </ScrollView>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  scrollContent: { padding: theme.spacing.lg },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: theme.spacing.xl,
+  container: {
+    flex: 1,
+    backgroundColor: palette.background,
   },
-  welcomeText: {
-    fontSize: 14,
-    color: theme.colors.textMuted,
-    fontWeight: theme.typography.weights.medium,
+  scrollContent: {
+    padding: space.lg,
+    gap: space.md,
+    paddingBottom: space.huge,
   },
-  vendorName: {
-    fontSize: 26,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.secondary,
-    marginTop: 4,
+  flex: {
+    flex: 1,
   },
-  statusIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: theme.radius.full,
+  pressed: {
+    opacity: 0.85,
   },
-  statusDot: { width: 6, height: 6, borderRadius: 3, marginEnd: 6 },
-  statusIndicatorText: {
-    fontSize: 11,
-    fontWeight: theme.typography.weights.bold,
-    textTransform: 'uppercase',
+  tabular: {
+    fontVariant: ['tabular-nums'],
   },
-  statusSection: {
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.lg,
-    borderRadius: theme.radius.xl,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing.xl,
-    ...theme.shadows.card,
+  sectionGap: {
+    marginTop: space.md,
+    marginBottom: 0,
   },
-  statusInfo: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  statusTextContainer: { marginStart: 12 },
-  statusText: {
-    fontSize: 16,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.secondary,
+  hint: {
+    marginBottom: space.sm,
   },
-  statusSubtext: { fontSize: 12, color: theme.colors.textLight, marginTop: 2 },
-  statsGrid: { gap: theme.spacing.md },
-  statCard: {
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.lg,
-    borderRadius: theme.radius.xl,
+  statusCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    ...theme.shadows.card,
+    gap: space.md,
   },
-  iconContainer: {
-    width: 54,
-    height: 54,
-    borderRadius: 16,
+  statusOpen: {
+    borderColor: palette.success,
+    backgroundColor: palette.successSoft,
+  },
+  statusClosed: {
+    backgroundColor: palette.surface,
+  },
+  statusIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
     justifyContent: 'center',
+  },
+  statusTitleRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginEnd: 16,
+    flexWrap: 'wrap',
+    gap: space.sm,
   },
-  statInfo: { flex: 1 },
-  statValue: {
-    fontSize: 22,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.secondary,
+  actionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    padding: space.lg,
+    borderRadius: radii.lg,
+    backgroundColor: palette.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: palette.borderStrong,
   },
-  statLabel: { fontSize: 13, color: theme.colors.textMuted, marginTop: 2 },
-  trendContainer: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
-  trendText: {
-    fontSize: 11,
-    color: theme.colors.success,
-    fontWeight: theme.typography.weights.semibold,
-    marginStart: 4,
+  actionCardUrgent: {
+    borderWidth: 1.5,
+    borderColor: palette.warning,
+    backgroundColor: palette.warningSoft,
+  },
+  actionCount: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: palette.surfaceMuted,
+  },
+  actionCountUrgent: {
+    backgroundColor: palette.warning,
+  },
+  tiles: {
+    flexDirection: 'row',
+    gap: space.sm,
+  },
+  tile: {
+    flex: 1,
+    padding: space.md,
+    gap: 2,
+    borderRadius: radii.lg,
+    backgroundColor: palette.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: palette.borderStrong,
+  },
+  tileIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: palette.primarySoft,
+    marginBottom: space.xs,
   },
 });
 

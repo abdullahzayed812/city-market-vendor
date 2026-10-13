@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSocket } from '../app/SocketContext';
 import { OrderService } from '../services/api/orderService';
 import { EventType, VendorOrderStatus, ProposeChangesDto } from '@city-market/shared';
+import { apiErrorMessage } from '@city-market/mobile-ui';
 import { useAuth } from '../app/AuthContext';
 import Toast from 'react-native-toast-message';
 import { useTranslation } from 'react-i18next';
@@ -20,13 +21,17 @@ export const useOrderDetails = (orderId: string) => {
     enabled: !!orderId,
   });
 
+  const onError = (err: unknown) =>
+    Toast.show({ type: 'error', text1: t('common.action_failed'), text2: apiErrorMessage(err) });
+
   const acceptMutation = useMutation({
     mutationFn: () => OrderService.acceptOrder(orderId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vendorOrder', orderId] });
-      queryClient.invalidateQueries({ queryKey: ['vendorOrders', vendorId] });
+      queryClient.invalidateQueries({ queryKey: ['vendor-orders', vendorId] });
       Toast.show({ type: 'success', text1: t('orders.order_accepted') });
     },
+    onError,
   });
 
   const proposeMutation = useMutation({
@@ -34,9 +39,10 @@ export const useOrderDetails = (orderId: string) => {
       OrderService.proposeChanges(orderId, proposals),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vendorOrder', orderId] });
-      queryClient.invalidateQueries({ queryKey: ['vendorOrders', vendorId] });
+      queryClient.invalidateQueries({ queryKey: ['vendor-orders', vendorId] });
       Toast.show({ type: 'success', text1: t('orders.proposal_sent') });
     },
+    onError,
   });
 
   const statusMutation = useMutation({
@@ -44,8 +50,9 @@ export const useOrderDetails = (orderId: string) => {
       OrderService.updateStatus(orderId, status, itemWeights),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vendorOrder', orderId] });
-      queryClient.invalidateQueries({ queryKey: ['vendorOrders', vendorId] });
-    }
+      queryClient.invalidateQueries({ queryKey: ['vendor-orders', vendorId] });
+    },
+    onError,
   });
 
   useEffect(() => {
@@ -53,7 +60,7 @@ export const useOrderDetails = (orderId: string) => {
 
     const handleUpdate = () => {
       queryClient.invalidateQueries({ queryKey: ['vendorOrder', orderId] });
-      queryClient.invalidateQueries({ queryKey: ['vendorOrders', vendorId] });
+      queryClient.invalidateQueries({ queryKey: ['vendor-orders', vendorId] });
     };
 
     const events = [

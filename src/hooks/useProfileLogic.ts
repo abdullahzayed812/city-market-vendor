@@ -4,7 +4,9 @@ import { useAuth } from '../app/AuthContext';
 import { useCallback, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
+import { apiErrorMessage } from '@city-market/mobile-ui';
 import { VendorService } from '../services/api/vendorService';
+import { applyLanguage } from '../locales/i18n';
 
 export const useProfileLogic = () => {
   const { t, i18n } = useTranslation();
@@ -13,9 +15,12 @@ export const useProfileLogic = () => {
   const isRTL = i18n.language === 'ar';
   const [mapVisible, setMapVisible] = useState(false);
 
-  const toggleLanguage = useCallback(() => {
-    i18n.changeLanguage(isRTL ? 'en' : 'ar');
-  }, [isRTL, i18n]);
+  const toggleLanguage = useCallback(async () => {
+    const needsRestart = await applyLanguage(isRTL ? 'en' : 'ar');
+    if (needsRestart) {
+      Toast.show({ type: 'info', text1: t('profile.language'), text2: t('profile.restart_to_apply'), autoHide: false });
+    }
+  }, [isRTL, t]);
 
   const navigateToReviews = useCallback(() => {
     navigation.navigate('Reviews');
@@ -27,14 +32,14 @@ export const useProfileLogic = () => {
       await refreshProfile();
       Toast.show({
         type: 'success',
-        text1: t('profile.update_success') || 'Profile Updated',
+        text1: t('profile.update_success'),
       });
     },
-    onError: () => {
+    onError: (err: unknown) => {
       Toast.show({
         type: 'error',
-        text1: t('common.error'),
-        text2: t('profile.update_error') || 'Failed to update profile',
+        text1: t('profile.update_error'),
+        text2: apiErrorMessage(err),
       });
     },
   });

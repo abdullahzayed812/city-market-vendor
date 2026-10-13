@@ -7,6 +7,8 @@ export const useReviews = () => {
   const { t } = useTranslation();
   const { vendor } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<unknown>(null);
   const [summary, setSummary] = useState({ averageRating: 0, totalRatings: 0 });
   const [reviews, setReviews] = useState<any[]>([]);
 
@@ -19,8 +21,10 @@ export const useReviews = () => {
       ]);
       setSummary(sumRes.data || { averageRating: 0, totalRatings: 0 });
       setReviews(revRes.data || []);
-    } catch (error) {
-      console.error('Failed to fetch reviews:', error);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to fetch reviews:', err);
+      setError(err);
     } finally {
       setLoading(false);
     }
@@ -30,11 +34,19 @@ export const useReviews = () => {
     fetchData();
   }, [fetchData]);
 
+  const refresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  }, [fetchData]);
+
   return {
     t,
     loading,
+    refreshing,
+    error,
     summary,
     reviews,
-    refresh: fetchData,
+    refresh,
   };
 };

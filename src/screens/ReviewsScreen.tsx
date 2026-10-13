@@ -1,104 +1,107 @@
 import React from 'react';
-import { View, StyleSheet, FlatList, ActivityIndicator, StatusBar } from 'react-native';
-import { AppText as Text } from '@city-market/mobile-ui';
-import { theme } from '../theme';
+import { View, StyleSheet, FlatList, RefreshControl } from 'react-native';
+import {
+  AppText as Text,
+  Card,
+  EmptyState,
+  LoadingState,
+  palette,
+  space,
+  shortId,
+} from '@city-market/mobile-ui';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import CustomHeader from '../components/common/CustomHeader';
 import { Star, MessageSquare } from 'lucide-react-native';
+import type { TFunction } from 'i18next';
+import CustomHeader from '../components/common/CustomHeader';
+import QueryError from '../components/common/QueryError';
 import { useReviews } from '../hooks/useReviews';
 
-const ReviewSummary = React.memo(({ summary, t }: any) => (
-  <View style={styles.summaryContainer}>
-    <View style={styles.summaryCard}>
-      <Star size={24} color={theme.colors.warning} fill={theme.colors.warning} />
-      <Text style={styles.averageRating}>{summary.averageRating.toFixed(1)}</Text>
-      <Text style={styles.totalRatings}>{summary.totalRatings} {t('reviews.total_reviews')}</Text>
-    </View>
+const Stars = ({ value, size }: { value: number; size: number }) => (
+  <View style={styles.stars} accessibilityLabel={`${value}/5`}>
+    {[0, 1, 2, 3, 4].map(i => (
+      <Star
+        key={i}
+        size={size}
+        color={i < Math.round(value) ? palette.accent : palette.borderStrong}
+        fill={i < Math.round(value) ? palette.accent : 'transparent'}
+      />
+    ))}
   </View>
-));
+);
 
-const ReviewItem = React.memo(({ item, t }: any) => (
-  <View style={styles.reviewCard}>
-    <View style={styles.reviewHeader}>
-      <View style={styles.starContainer}>
-        {[...Array(5)].map((_, i) => (
-          <Star
-            key={i}
-            size={14}
-            color={i < item.stars ? theme.colors.warning : theme.colors.textMuted}
-            fill={i < item.stars ? theme.colors.warning : 'transparent'}
-          />
-        ))}
-      </View>
-      <Text style={styles.reviewDate}>{new Date(item.createdAt).toLocaleDateString()}</Text>
+const ReviewSummary = ({ summary, t }: { summary: { averageRating: number; totalRatings: number }; t: TFunction }) => (
+  <Card style={styles.summary}>
+    <Text variant="display" color={palette.text} style={styles.tabular}>
+      {summary.totalRatings > 0 ? summary.averageRating.toFixed(1) : '—'}
+    </Text>
+    <View style={styles.summaryText}>
+      <Stars value={summary.averageRating} size={20} />
+      <Text variant="caption" color={palette.textMuted}>
+        {t('reviews.total_reviews')}: {summary.totalRatings}
+      </Text>
     </View>
-    <Text style={styles.reviewComment}>{item.comment || t('reviews.no_comment')}</Text>
-    <Text style={styles.orderId}>{t('orders.order_id')}: #{item.orderId.slice(-8).toUpperCase()}</Text>
-  </View>
+  </Card>
+);
+
+const ReviewItem = React.memo(({ item, t }: { item: any; t: TFunction }) => (
+  <Card style={styles.review}>
+    <View style={styles.reviewHead}>
+      <Stars value={item.stars} size={16} />
+      <Text variant="caption" color={palette.textMuted}>{new Date(item.createdAt).toLocaleDateString()}</Text>
+    </View>
+    {item.comment ? (
+      <Text variant="body" color={palette.text}>{item.comment}</Text>
+    ) : (
+      <Text variant="body" color={palette.textMuted}>{t('reviews.no_comment')}</Text>
+    )}
+    <Text variant="caption" color={palette.textMuted}>
+      {t('orders.order_id')} {shortId(item.orderId)}
+    </Text>
+  </Card>
 ));
 
 const ReviewsScreen = () => {
-  const { t, loading, summary, reviews } = useReviews();
+  const { t, loading, refreshing, error, summary, reviews, refresh } = useReviews();
+  const header = <CustomHeader title={t('reviews.title')} showBack />;
 
+  let body: React.ReactNode;
   if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
+    body = <LoadingState />;
+  } else if (error && reviews.length === 0) {
+    body = <QueryError error={error} onRetry={refresh} retrying={refreshing} />;
+  } else {
+    body = (
+      <FlatList
+        data={reviews}
+        renderItem={({ item }) => <ReviewItem item={item} t={t} />}
+        keyExtractor={item => item.id}
+        contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={palette.primary} colors={[palette.primary]} />
+        }
+        ListHeaderComponent={<ReviewSummary summary={summary} t={t} />}
+        ListEmptyComponent={<EmptyState icon={MessageSquare} title={t('reviews.no_reviews')} compact />}
+      />
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
-      <CustomHeader title={t('reviews.title')} showBack={true} />
-      
-      <FlatList
-        data={reviews}
-        renderItem={({ item }) => <ReviewItem item={item} t={t} />}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        ListHeaderComponent={<ReviewSummary summary={summary} t={t} />}
-        ListEmptyComponent={() => (
-          <View style={styles.emptyContainer}>
-            <MessageSquare size={48} color={theme.colors.textMuted} />
-            <Text style={styles.emptyText}>{t('reviews.no_reviews')}</Text>
-          </View>
-        )}
-      />
+    <SafeAreaView style={styles.container} edges={['top']}>
+      {header}
+      {body}
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  summaryContainer: { padding: 20 },
-  summaryCard: {
-    backgroundColor: theme.colors.surface,
-    padding: 24,
-    borderRadius: 24,
-    alignItems: 'center',
-    ...theme.shadows.card,
-  },
-  averageRating: { fontSize: 36, fontWeight: '900', color: theme.colors.secondary, marginVertical: 8 },
-  totalRatings: { fontSize: 14, color: theme.colors.textLight },
-  listContent: { paddingBottom: 20 },
-  reviewCard: {
-    backgroundColor: theme.colors.surface,
-    padding: 16,
-    borderRadius: 20,
-    marginBottom: 16,
-    marginHorizontal: 20,
-    ...theme.shadows.card,
-  },
-  reviewHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  starContainer: { flexDirection: 'row', gap: 2 },
-  reviewDate: { fontSize: 12, color: theme.colors.textMuted },
-  reviewComment: { fontSize: 15, color: theme.colors.secondary, lineHeight: 22 },
-  orderId: { fontSize: 11, fontWeight: 'bold', color: theme.colors.textMuted, marginTop: 12 },
-  emptyContainer: { alignItems: 'center', marginTop: 100 },
-  emptyText: { marginTop: 16, color: theme.colors.textMuted, fontSize: 16 },
+  container: { flex: 1, backgroundColor: palette.background },
+  list: { padding: space.lg, gap: space.md, flexGrow: 1 },
+  tabular: { fontVariant: ['tabular-nums'] },
+  stars: { flexDirection: 'row', gap: 2 },
+  summary: { flexDirection: 'row', alignItems: 'center', gap: space.lg },
+  summaryText: { flex: 1, gap: space.xs },
+  review: { gap: space.sm },
+  reviewHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
 });
 
 export default ReviewsScreen;

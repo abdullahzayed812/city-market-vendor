@@ -1,65 +1,50 @@
 import React from 'react';
+import { View, StyleSheet, Pressable, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  StatusBar,
-} from 'react-native';
-import { AppText as Text } from '@city-market/mobile-ui';
-import {
-  User,
-  LogOut,
-  Globe,
-  Clock,
-  ChevronRight,
-  Settings,
-  ShieldCheck,
-  Star,
-  MapPin,
-} from 'lucide-react-native';
+  AppText as Text,
+  Card,
+  Button,
+  ForwardIcon,
+  palette,
+  radii,
+  space,
+} from '@city-market/mobile-ui';
+import { User, LogOut, Globe, Star, MapPin, Phone, type LucideIcon } from 'lucide-react-native';
 import Config from 'react-native-config';
-import { theme } from '../theme';
+import DeviceInfo from 'react-native-device-info';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomHeader from '../components/common/CustomHeader';
+import ImageWithPlaceholder from '../components/common/ImageWithPlaceholder';
 import { useProfileLogic } from '../hooks/useProfileLogic';
 import StoreMapPickerModal from '../components/StoreMapPickerModal';
-import { ActivityIndicator } from 'react-native';
 
-const ProfileItem = React.memo(({
-  icon: Icon,
-  label,
-  value,
-  onPress,
-  isLast = false,
-  color = theme.colors.primary,
-  isRTL,
-}: any) => {
-  return (
-    <TouchableOpacity
-      style={[styles.menuItem, isLast && { borderBottomWidth: 0 }]}
-      onPress={onPress}
-      disabled={!onPress}
-    >
-      <View style={styles.menuItemLeft}>
-        <View style={[styles.iconBadge, { backgroundColor: color + '10' }]}>
-          <Icon size={20} color={color} />
-        </View>
-        <Text style={styles.menuLabel}>{label}</Text>
-      </View>
-      <View style={styles.menuItemRight}>
-        {value && <Text style={styles.menuValue}>{value}</Text>}
-        {onPress && (
-          <ChevronRight
-            size={18}
-            color={theme.colors.textLight}
-            style={isRTL && { transform: [{ rotate: '180deg' }] }}
-          />
-        )}
-      </View>
-    </TouchableOpacity>
-  );
-});
+interface RowProps {
+  icon: LucideIcon;
+  label: string;
+  value?: string;
+  trailing?: React.ReactNode;
+  onPress?: () => void;
+  isLast?: boolean;
+}
+
+const Row = ({ icon: Icon, label, value, trailing, onPress, isLast }: RowProps) => (
+  <Pressable
+    onPress={onPress}
+    disabled={!onPress}
+    accessibilityRole={onPress ? 'button' : undefined}
+    style={({ pressed }) => [styles.row, !isLast && styles.rowDivider, pressed && styles.rowPressed]}
+  >
+    <View style={styles.rowIcon}>
+      <Icon size={20} color={palette.primary} />
+    </View>
+    <View style={styles.flex}>
+      <Text variant="caption" color={palette.textMuted}>{label}</Text>
+      {value ? <Text variant="bodyStrong" color={palette.text} numberOfLines={2}>{value}</Text> : null}
+    </View>
+    {trailing}
+    {onPress ? <ForwardIcon size={18} color={palette.textMuted} /> : null}
+  </Pressable>
+);
 
 export const GOOGLE_MAPS_API_KEY = Config.GOOGLE_MAPS_API_KEY ?? '';
 
@@ -79,109 +64,70 @@ const ProfileScreen = () => {
     isUpdating,
   } = useProfileLogic();
 
+  const confirmLogoutAll = () =>
+    Alert.alert(t('profile.logout_all_confirm_title'), t('profile.logout_all_confirm_message'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.logout_all_devices'), style: 'destructive', onPress: signOutAllDevices },
+    ]);
+
+  const shopName = vendor?.shopName || t('common.vendor');
+  const ratingValue =
+    vendor?.totalRatings > 0
+      ? `${Number(vendor.averageRating ?? 0).toFixed(1)} · ${t('profile.reviews_count', { count: vendor.totalRatings })}`
+      : t('reviews.no_reviews');
+
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+    <SafeAreaView style={styles.container} edges={['top']}>
       <CustomHeader title={t('profile.title')} />
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.profileHeader}>
-          <View style={styles.avatarContainer}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {vendor?.shopName?.charAt(0) || t('common.vendor').charAt(0)}
-              </Text>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <Card style={styles.identity}>
+          {vendor?.storeImage ? (
+            <ImageWithPlaceholder uri={vendor.storeImage} style={styles.avatar} />
+          ) : (
+            <View style={[styles.avatar, styles.avatarFallback]}>
+              <Text variant="title" color={palette.primary}>{shopName.charAt(0)}</Text>
             </View>
-            <View style={styles.verifiedBadge}>
-              <ShieldCheck size={14} color={theme.colors.white} />
-            </View>
+          )}
+          <View style={styles.flex}>
+            <Text variant="heading" color={palette.text} numberOfLines={2}>{shopName}</Text>
+            {user?.email ? <Text variant="caption" color={palette.textMuted} numberOfLines={1}>{user.email}</Text> : null}
           </View>
-          <Text style={styles.vendorName} numberOfLines={2} adjustsFontSizeToFit>
-            {vendor?.shopName || t('common.vendor')}
-          </Text>
-          <Text style={styles.vendorEmail}>{user?.email}</Text>
-          <View style={styles.idBadge}>
-            <Text style={styles.idBadgeText}>
-              {t('profile.vendor_id')}: #{vendor?.id?.slice(-8).toUpperCase()}
-            </Text>
-          </View>
+        </Card>
+
+        <Text variant="label" color={palette.textSecondary} style={styles.sectionTitle}>{t('profile.store_info')}</Text>
+        <Card padded={false}>
+          <Row icon={User} label={t('profile.owner_name')} value={vendor?.ownerName || t('profile.not_set')} />
+          <Row icon={Phone} label={t('profile.phone')} value={vendor?.phone || t('profile.not_set')} />
+          <Row icon={Star} label={t('profile.reviews')} value={ratingValue} onPress={navigateToReviews} />
+          <Row
+            icon={MapPin}
+            label={t('profile.store_location')}
+            value={vendor?.address || t('profile.not_set')}
+            trailing={isUpdating ? <ActivityIndicator size="small" color={palette.primary} /> : null}
+            onPress={isUpdating ? undefined : () => setMapVisible(true)}
+            isLast
+          />
+        </Card>
+
+        <Text variant="label" color={palette.textSecondary} style={styles.sectionTitle}>{t('profile.app_preferences')}</Text>
+        <Card padded={false}>
+          <Row
+            icon={Globe}
+            label={t('profile.language')}
+            value={isRTL ? t('profile.arabic') : t('profile.english')}
+            onPress={toggleLanguage}
+            isLast
+          />
+        </Card>
+
+        <Text variant="label" color={palette.textSecondary} style={styles.sectionTitle}>{t('profile.account')}</Text>
+        <View style={styles.logout}>
+          <Button label={t('common.logout')} icon={LogOut} variant="dangerOutline" onPress={signOut} fullWidth />
+          <Button label={t('common.logout_all_devices')} variant="ghost" onPress={confirmLogoutAll} fullWidth />
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            {t('profile.account_settings')}
-          </Text>
-          <View style={styles.menuGroup}>
-            <ProfileItem
-              icon={User}
-              label={t('profile.owner_name')}
-              value={vendor?.ownerName}
-            />
-            <ProfileItem
-              icon={Star}
-              label={t('profile.reviews')}
-              value={vendor?.averageRating?.toFixed(1) || '0.0'}
-              onPress={navigateToReviews}
-              isRTL={isRTL}
-            />
-            <ProfileItem
-              icon={Clock}
-              label={t('profile.working_hours')}
-              value="09:00 - 21:00"
-              onPress={() => { }}
-            />
-            <ProfileItem
-              icon={Globe}
-              label={t('profile.language')}
-              value={isRTL ? t('profile.arabic') : t('profile.english')}
-              onPress={toggleLanguage}
-              color={theme.colors.info}
-              isRTL={isRTL}
-            />
-            <ProfileItem
-              icon={MapPin}
-              label={t('profile.store_location')}
-              value={isUpdating ? <ActivityIndicator size="small" /> : vendor?.address}
-              onPress={() => setMapVisible(true)}
-              isLast={true}
-              color={theme.colors.warning}
-              isRTL={isRTL}
-            />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            {t('profile.app_preferences')}
-          </Text>
-          <View style={styles.menuGroup}>
-            <ProfileItem
-              icon={Settings}
-              label={t('profile.push_notifications')}
-              value={t('dashboard.open')}
-              onPress={() => { }}
-            />
-            <ProfileItem
-              icon={ShieldCheck}
-              label={t('profile.security_privacy')}
-              onPress={() => { }}
-              isLast={true}
-              color={theme.colors.success}
-            />
-          </View>
-        </View>
-
-        <TouchableOpacity style={styles.logoutButton} onPress={signOut}>
-          <LogOut size={20} color={theme.colors.error} />
-          <Text style={styles.logoutText}>{t('common.logout')}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.logoutButton} onPress={signOutAllDevices}>
-          <LogOut size={20} color={theme.colors.error} />
-          <Text style={styles.logoutText}>{t('common.logout_all_devices')}</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.versionText}>
-          {t('profile.version', { version: '1.2.0 (Build 45)' })}
+        <Text variant="caption" color={palette.textMuted} style={styles.version}>
+          {t('profile.version', { version: `${DeviceInfo.getVersion()} (${DeviceInfo.getBuildNumber()})` })}
         </Text>
       </ScrollView>
 
@@ -197,123 +143,33 @@ const ProfileScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  profileHeader: {
-    alignItems: 'center',
-    paddingVertical: 30,
-    backgroundColor: theme.colors.surface,
-  },
-  avatarContainer: { position: 'relative', marginBottom: 15 },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 35,
-    backgroundColor: theme.colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...theme.shadows.medium,
-  },
-  verifiedBadge: {
-    position: 'absolute',
-    bottom: -5,
-    right: -5,
-    backgroundColor: theme.colors.success,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: theme.colors.surface,
-  },
-  avatarText: {
-    color: theme.colors.white,
-    fontSize: 42,
-    fontWeight: theme.typography.weights.black,
-  },
-  vendorName: {
-    fontSize: 24,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.secondary,
-    textAlign: 'center',
-  },
-  vendorEmail: { fontSize: 14, color: theme.colors.textLight, marginTop: 4 },
-  idBadge: {
-    backgroundColor: theme.colors.background,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    marginTop: 12,
-  },
-  idBadgeText: {
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: theme.colors.textMuted,
-  },
-  section: { marginTop: 25, paddingHorizontal: theme.spacing.lg },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.textLight,
-    textTransform: 'uppercase',
-    marginBottom: 10,
-    marginStart: 4,
-    letterSpacing: 0.5,
-  },
-  menuGroup: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: 24,
-    overflow: 'hidden',
-    ...theme.shadows.card,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.background,
-  },
-  menuItemLeft: { flexDirection: 'row', alignItems: 'center' },
-  iconBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginEnd: 12,
-  },
-  menuLabel: {
-    fontSize: 16,
-    color: theme.colors.secondary,
-    fontWeight: theme.typography.weights.semibold,
-  },
-  menuItemRight: { flexDirection: 'row', alignItems: 'center' },
-  menuValue: { fontSize: 14, color: theme.colors.textMuted, marginEnd: 8 },
-  logoutButton: {
+  container: { flex: 1, backgroundColor: palette.background },
+  content: { padding: space.lg, paddingBottom: space.huge },
+  flex: { flex: 1 },
+  identity: { flexDirection: 'row', alignItems: 'center', gap: space.lg },
+  avatar: { width: 64, height: 64, borderRadius: radii.lg },
+  avatarFallback: { alignItems: 'center', justifyContent: 'center', backgroundColor: palette.primarySoft },
+  sectionTitle: { marginTop: space.xl, marginBottom: space.sm, paddingHorizontal: space.xs },
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: space.md,
+    minHeight: 64,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
+  },
+  rowDivider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: palette.border },
+  rowPressed: { backgroundColor: palette.surfaceMuted },
+  rowIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 40,
-    padding: 18,
-    backgroundColor: theme.colors.surface,
-    marginHorizontal: theme.spacing.lg,
-    borderRadius: 24,
-    ...theme.shadows.card,
+    backgroundColor: palette.primarySoft,
   },
-  logoutText: {
-    marginStart: 10,
-    color: theme.colors.error,
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  versionText: {
-    textAlign: 'center',
-    color: theme.colors.textLight,
-    fontSize: 12,
-    marginTop: 30,
-    marginBottom: 40,
-  }
+  logout: { gap: space.sm },
+  version: { textAlign: 'center', marginTop: space.xl },
 });
 
 export default ProfileScreen;

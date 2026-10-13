@@ -34,6 +34,10 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>The camera is used to photograph your documents when you register your store.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Your photos are used to attach your documents when you register your store.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>We need your location to show it on the map and set your store location.</string>
 	<key>UILaunchStoryboardName</key>

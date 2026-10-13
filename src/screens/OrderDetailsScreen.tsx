@@ -3,245 +3,223 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
   TextInput,
   Modal,
   Switch,
   RefreshControl,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  I18nManager,
 } from 'react-native';
-import { AppText as Text } from '@city-market/mobile-ui';
 import {
-  Check,
-  AlertCircle,
-  Minus,
-  Plus,
-  X,
-  Trash2,
-  Send,
-  XCircle,
-  Clock,
-} from 'lucide-react-native';
+  AppText as Text,
+  Card,
+  SectionHeader,
+  StatusBadge,
+  SummaryRow,
+  Button,
+  IconButton,
+  LoadingState,
+  palette,
+  radii,
+  space,
+  sizes,
+  shortId,
+  type Tone,
+} from '@city-market/mobile-ui';
+import { Check, Minus, Plus, X, Send, XCircle, Timer, FilePen, Info, ArrowLeft, ArrowRight } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { theme } from '../theme';
-import { VendorOrderStatus } from '@city-market/shared';
+import type { TFunction } from 'i18next';
+import { VendorOrderStatus, ProposalStatus, ProposalType } from '@city-market/shared';
 import CustomHeader from '../components/common/CustomHeader';
+import QueryError from '../components/common/QueryError';
 import { useOrderDetailsLogic } from '../hooks/useOrderDetailsLogic';
+import { useFormat } from '../hooks/useFormat';
+import type { SlaCountdownResult } from '../hooks/useSlaCountdown';
+import { vendorOrderStatusMeta, vendorOrderStatusKey } from '../features/orderStatus';
 
-const StatusCard = React.memo(({ t, order }: any) => (
-  <View style={styles.statusCard}>
-    <Text style={styles.statusLabel}>{t('orders.status')}</Text>
-    <View
-      style={[styles.badge, { backgroundColor: theme.colors.primary + '15' }]}
-    >
-      <Text
-        style={styles.badgeText}
-        numberOfLines={1}
-        adjustsFontSizeToFit
-        maxFontSizeMultiplier={1.2}
-      >
-        {t(`orders.status_${order?.status.toLowerCase()}`)}
-      </Text>
+/** "Before → after" arrow pointing in reading direction. */
+const ChangeArrow = I18nManager.isRTL ? ArrowLeft : ArrowRight;
+
+const PROPOSAL_TONE: Record<string, Tone> = {
+  [ProposalStatus.PENDING]: 'info',
+  [ProposalStatus.ACCEPTED]: 'success',
+  [ProposalStatus.REJECTED]: 'error',
+};
+
+const Countdown = ({ label, countdown }: { label: string; countdown: SlaCountdownResult }) => {
+  if (countdown.isExpired || countdown.remainingSeconds <= 0) return null;
+  const fg = countdown.isWarning ? palette.error : palette.warning;
+  return (
+    <View style={[styles.countdown, { backgroundColor: countdown.isWarning ? palette.errorSoft : palette.warningSoft }]}>
+      <Timer size={20} color={fg} />
+      <Text variant="label" color={fg} style={styles.flex}>{label}</Text>
+      <Text variant="title" color={fg} style={styles.tabular}>{countdown.formattedTime}</Text>
     </View>
-  </View>
-));
+  );
+};
 
-const OrderItem = React.memo(({ t, item }: any) => (
-  <View key={item.id} style={styles.itemCard}>
-    <View style={styles.itemHeader}>
-      <Text style={styles.itemName}>{item.productName}</Text>
-      <Text style={styles.itemPrice}>
-        {t('common.currency')} {item.unitPrice.toFixed(2)}
-      </Text>
-    </View>
+interface ItemRowProps {
+  item: any;
+  proposal?: any;
+  t: TFunction;
+  money: (n: number | null | undefined) => string;
+  weight: (g: number | null | undefined) => string;
+  isLast: boolean;
+}
 
-    <View style={styles.itemActions}>
-      <View style={styles.quantityContainer}>
-        {item.quantity ? (
-          <>
-            <Text style={styles.qtyLabel}>{t('products.quantity')}:</Text>
-            <Text style={styles.qtyValue}>{item.quantity}</Text>
-          </>
-        ) : (
-          <>
-            <Text style={styles.qtyLabel}>{t('orders.weight')}:</Text>
-            <Text style={styles.qtyValue}>
-              ≈ {(item.requestedWeightGrams / 1000).toFixed(2)} kg
-              {item.actualWeightGrams && (
-                <Text style={styles.actualWeightLabel}>
-                  {' '}
-                  ({t('orders.actual_weight') || 'Act'}:{' '}
-                  {(item.actualWeightGrams / 1000).toFixed(2)} kg)
-                </Text>
-              )}
-            </Text>
-          </>
-        )}
+const ItemRow = React.memo(({ item, proposal, t, money, weight, isLast }: ItemRowProps) => {
+  const isWeighted = !item.quantity;
+  const requested = isWeighted ? `≈ ${weight(item.requestedWeightGrams)}` : `× ${item.quantity}`;
+
+  let proposedValue: string | null = null;
+  if (proposal) {
+    if (proposal.type === ProposalType.UNAVAILABLE) proposedValue = t('orders.unavailable');
+    else if (proposal.type === ProposalType.QUANTITY_REDUCTION) proposedValue = `× ${proposal.proposedQuantity}`;
+    else if (proposal.type === ProposalType.WEIGHT_ADJUSTMENT) proposedValue = weight(proposal.proposedWeightGrams);
+  }
+
+  return (
+    <View style={[styles.itemRow, !isLast && styles.itemDivider]}>
+      <View style={styles.itemMain}>
+        <Text variant="bodyStrong" color={palette.text} style={styles.flex}>
+          {item.productName}
+        </Text>
+        <Text variant="bodyStrong" color={palette.text} style={styles.tabular}>{requested}</Text>
       </View>
-    </View>
-  </View>
-));
-
-const ProposalModal = React.memo(
-  ({
-    visible,
-    onClose,
-    t,
-    order,
-    proposalData,
-    handleUpdateProposal,
-    onSubmit,
-    isProcessing,
-  }: any) => (
-    <Modal
-      visible={visible}
-      transparent={true}
-      animationType="slide"
-      onRequestClose={onClose}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{t('orders.propose_changes')}</Text>
-            <TouchableOpacity onPress={onClose}>
-              <X size={24} color={theme.colors.text} />
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView style={styles.modalBody}>
-            {order?.items.map((item: any) => {
-              const data = proposalData[item.id] || {
-                isUnavailable: false,
-                newQuantity: item.quantity,
-                newWeightKg: '0',
-              };
-              return (
-                <View key={item.id} style={styles.proposalItemRow}>
-                  <View style={styles.proposalItemHeader}>
-                    <Text style={styles.proposalItemName} numberOfLines={1}>
-                      {item.productName}
-                    </Text>
-                    <View style={styles.unavailableToggle}>
-                      <Text style={styles.unavailableText}>
-                        {t('orders.mark_unavailable')}
-                      </Text>
-                      <Switch
-                        value={data.isUnavailable}
-                        onValueChange={val =>
-                          handleUpdateProposal(item.id, {
-                            isUnavailable: val,
-                          })
-                        }
-                        trackColor={{ true: theme.colors.error }}
-                      />
-                    </View>
-                  </View>
-
-                  {!data.isUnavailable && (
-                    <View style={styles.proposalInputArea}>
-                      {item.quantity ? (
-                        <View style={styles.qtyProposalContainer}>
-                          <Text style={styles.inputLabel}>
-                            {t('products.quantity')}:
-                          </Text>
-                          <View style={styles.qtyControls}>
-                            <TouchableOpacity
-                              onPress={() =>
-                                handleUpdateProposal(item.id, {
-                                  newQuantity: Math.max(
-                                    0,
-                                    (data.newQuantity || 0) - 1,
-                                  ),
-                                })
-                              }
-                              style={styles.qtyBtn}
-                            >
-                              <Minus size={16} color={theme.colors.primary} />
-                            </TouchableOpacity>
-                            <Text style={styles.qtyValue}>
-                              {data.newQuantity}
-                            </Text>
-                            <TouchableOpacity
-                              onPress={() =>
-                                handleUpdateProposal(item.id, {
-                                  newQuantity: Math.min(
-                                    item.quantity,
-                                    (data.newQuantity || 0) + 1,
-                                  ),
-                                })
-                              }
-                              style={styles.qtyBtn}
-                              disabled={data.newQuantity === item.quantity}
-                            >
-                              <Plus
-                                size={16}
-                                color={
-                                  data.newQuantity === item.quantity
-                                    ? theme.colors.border
-                                    : theme.colors.primary
-                                }
-                              />
-                            </TouchableOpacity>
-                          </View>
-                          <Text style={styles.originalHint}>
-                            / {item.quantity}
-                          </Text>
-                        </View>
-                      ) : (
-                        <View style={styles.weightProposalContainer}>
-                          <Text style={styles.inputLabel}>
-                            {t('orders.actual_weight')}:
-                          </Text>
-                          <View style={styles.weightInputBox}>
-                            <TextInput
-                              style={styles.weightInput}
-                              keyboardType="numeric"
-                              value={data.newWeightKg}
-                              onChangeText={text =>
-                                handleUpdateProposal(item.id, {
-                                  newWeightKg: text,
-                                })
-                              }
-                            />
-                            <Text style={styles.weightUnit}>kg</Text>
-                          </View>
-                          <Text style={styles.originalHint}>
-                            (Req:{' '}
-                            {(item.requestedWeightGrams / 1000).toFixed(2)} kg)
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                  )}
-                </View>
-              );
-            })}
-          </ScrollView>
-
-          <TouchableOpacity
-            style={[styles.modalSubmitBtn, isProcessing && { opacity: 0.7 }]}
-            onPress={onSubmit}
-            disabled={isProcessing}
-          >
-            {isProcessing ? (
-              <ActivityIndicator color={theme.colors.white} />
-            ) : (
-              <>
-                <Send
-                  size={18}
-                  color={theme.colors.white}
-                  style={{ marginEnd: 10 }}
-                />
-                <Text style={styles.modalSubmitText}>
-                  {t('orders.send_proposal')}
-                </Text>
-              </>
-            )}
-          </TouchableOpacity>
+      <View style={styles.itemMeta}>
+        <Text variant="caption" color={palette.textMuted}>
+          {t('orders.unit_price')}: {money(item.unitPrice)}
+        </Text>
+        {isWeighted && item.actualWeightGrams ? (
+          <Text variant="caption" color={palette.textSecondary}>
+            {t('orders.actual_weight')}: {weight(item.actualWeightGrams)}
+          </Text>
+        ) : null}
+      </View>
+      {proposedValue ? (
+        <View style={styles.proposalLine}>
+          <Text variant="caption" color={palette.textMuted} style={styles.strike}>{requested}</Text>
+          <ChangeArrow size={14} color={palette.textMuted} />
+          <Text variant="label" color={palette.text}>{proposedValue}</Text>
+          <StatusBadge
+            size="sm"
+            tone={PROPOSAL_TONE[proposal.status] ?? 'neutral'}
+            label={t(`orders.proposal_${String(proposal.status).toLowerCase()}`)}
+            style={styles.pushEnd}
+          />
         </View>
-      </View>
-    </Modal>
-  ),
+      ) : null}
+    </View>
+  );
+});
+
+const ProposalSheet = ({
+  visible,
+  onClose,
+  t,
+  order,
+  proposalData,
+  handleUpdateProposal,
+  onSubmit,
+  isProcessing,
+  weight,
+  kg,
+}: any) => (
+  <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <SafeAreaView edges={['bottom']} style={styles.sheet}>
+        <View style={styles.sheetHeader}>
+          <View style={styles.flex}>
+            <Text variant="heading" color={palette.text}>{t('orders.propose_changes')}</Text>
+            <Text variant="caption" color={palette.textMuted}>{t('orders.proposal_sheet_hint')}</Text>
+          </View>
+          <IconButton icon={X} onPress={onClose} accessibilityLabel={t('common.cancel')} variant="soft" size={40} />
+        </View>
+
+        <ScrollView style={styles.sheetBody} contentContainerStyle={styles.sheetBodyContent} keyboardShouldPersistTaps="handled">
+          {order?.items.map((item: any) => {
+            const data = proposalData[item.id] || { isUnavailable: false, newQuantity: item.quantity, newWeightKg: '' };
+            const atMax = data.newQuantity >= item.quantity;
+            const atMin = (data.newQuantity || 0) <= 0;
+            return (
+              <View key={item.id} style={[styles.proposalItem, data.isUnavailable && styles.proposalItemOff]}>
+                <View style={styles.itemMain}>
+                  <Text variant="bodyStrong" color={palette.text} style={styles.flex} numberOfLines={2}>
+                    {item.productName}
+                  </Text>
+                </View>
+                <View style={styles.toggleRow}>
+                  <Text variant="caption" color={data.isUnavailable ? palette.error : palette.textSecondary} style={styles.flex}>
+                    {t('orders.mark_unavailable')}
+                  </Text>
+                  <Switch
+                    value={data.isUnavailable}
+                    onValueChange={val => handleUpdateProposal(item.id, { isUnavailable: val })}
+                    trackColor={{ true: palette.errorSoft, false: palette.borderStrong }}
+                    thumbColor={data.isUnavailable ? palette.error : palette.white}
+                    accessibilityLabel={`${t('orders.mark_unavailable')}: ${item.productName}`}
+                  />
+                </View>
+
+                {!data.isUnavailable &&
+                  (item.quantity ? (
+                    <View style={styles.inputRow}>
+                      <Text variant="caption" color={palette.textMuted} style={styles.flex}>
+                        {t('orders.new_qty')} ({t('orders.original_qty')}: {item.quantity})
+                      </Text>
+                      <View style={styles.stepper}>
+                        <IconButton
+                          icon={Minus}
+                          size={36}
+                          variant="plain"
+                          iconColor={atMin ? palette.textDisabled : palette.primary}
+                          disabled={atMin}
+                          onPress={() => handleUpdateProposal(item.id, { newQuantity: Math.max(0, (data.newQuantity || 0) - 1) })}
+                          accessibilityLabel="-1"
+                        />
+                        <Text variant="heading" color={palette.text} style={[styles.tabular, styles.stepValue]}>
+                          {data.newQuantity}
+                        </Text>
+                        <IconButton
+                          icon={Plus}
+                          size={36}
+                          variant="plain"
+                          iconColor={atMax ? palette.textDisabled : palette.primary}
+                          disabled={atMax}
+                          onPress={() => handleUpdateProposal(item.id, { newQuantity: Math.min(item.quantity, (data.newQuantity || 0) + 1) })}
+                          accessibilityLabel="+1"
+                        />
+                      </View>
+                    </View>
+                  ) : (
+                    <View style={styles.inputRow}>
+                      <Text variant="caption" color={palette.textMuted} style={styles.flex}>
+                        {t('orders.actual_weight')} ({t('orders.requested_weight')}: {weight(item.requestedWeightGrams)})
+                      </Text>
+                      <View style={styles.weightBox}>
+                        <TextInput
+                          style={styles.weightInput}
+                          keyboardType="decimal-pad"
+                          value={data.newWeightKg}
+                          onChangeText={text => handleUpdateProposal(item.id, { newWeightKg: text })}
+                          accessibilityLabel={`${t('orders.actual_weight')}: ${item.productName}`}
+                          selectTextOnFocus
+                        />
+                        <Text variant="caption" color={palette.textMuted}>{kg}</Text>
+                      </View>
+                    </View>
+                  ))}
+              </View>
+            );
+          })}
+        </ScrollView>
+
+        <Button label={t('orders.send_proposal')} icon={Send} onPress={onSubmit} loading={isProcessing} size="lg" fullWidth />
+      </SafeAreaView>
+    </KeyboardAvoidingView>
+  </Modal>
 );
 
 const OrderDetailsScreen = ({ route }: any) => {
@@ -250,6 +228,7 @@ const OrderDetailsScreen = ({ route }: any) => {
     t,
     order,
     isLoading,
+    error,
     refetch,
     isRefetching,
     acceptOrder,
@@ -265,161 +244,135 @@ const OrderDetailsScreen = ({ route }: any) => {
     vendorConfirmationCountdown,
     customerDecisionCountdown,
   } = useOrderDetailsLogic(orderId);
+  const { money, weight, kg } = useFormat();
+
+  const header = <CustomHeader title={t('orders.details')} subtitle={order ? shortId(order.id) : undefined} showBack />;
 
   if (isLoading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={theme.colors.primary} />
-      </View>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        {header}
+        <LoadingState />
+      </SafeAreaView>
     );
   }
 
+  if (!order) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        {header}
+        <QueryError error={error} onRetry={refetch} retrying={isRefetching} />
+      </SafeAreaView>
+    );
+  }
+
+  const meta = vendorOrderStatusMeta(order.status);
+  const proposalsByItem = new Map<string, any>((order.proposals ?? []).map((p: any) => [p.vendorOrderItemId, p]));
+
+  const confirmCancel = () =>
+    Alert.alert(t('orders.cancel_confirm_title'), t('orders.cancel_confirm_message'), [
+      { text: t('orders.keep_order'), style: 'cancel' },
+      { text: t('orders.cancel_order'), style: 'destructive', onPress: () => updateStatus({ status: VendorOrderStatus.CANCELLED }) },
+    ]);
+
+  const hint = canAccept ? t('orders.pending_hint') : isPreparing ? t('orders.preparing_hint') : null;
+
   return (
-    <SafeAreaView style={styles.container}>
-      <CustomHeader title={t('orders.details')} showBack={true} />
+    <SafeAreaView style={styles.container} edges={['top']}>
+      {header}
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl
-            refreshing={isRefetching}
-            onRefresh={refetch}
-            tintColor={theme.colors.primary}
-          />
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={palette.primary} colors={[palette.primary]} />
         }
       >
-        <StatusCard t={t} order={order} />
-
-        {canAccept && !vendorConfirmationCountdown.isExpired && vendorConfirmationCountdown.remainingSeconds > 0 && (
-          <View style={[
-            styles.countdownBanner,
-            vendorConfirmationCountdown.isWarning && { backgroundColor: '#fee2e2', borderColor: '#fca5a5' },
-          ]}>
-            <Clock size={18} color={vendorConfirmationCountdown.isWarning ? '#dc2626' : '#b45309'} />
-            <View>
-              <Text style={[styles.countdownTitle, vendorConfirmationCountdown.isWarning && { color: '#991b1b' }]}>
-                {t('orders.confirm_deadline')}
-              </Text>
-              <Text style={[styles.countdownTimer, vendorConfirmationCountdown.isWarning && { color: '#dc2626' }]}>
-                {vendorConfirmationCountdown.formattedTime}
+        <Card style={styles.statusCard}>
+          <View style={styles.statusRow}>
+            <View style={styles.flex}>
+              <Text variant="caption" color={palette.textMuted}>{t('orders.status')}</Text>
+              <Text variant="caption" color={palette.textMuted}>
+                {new Date(order.createdAt).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
               </Text>
             </View>
+            <StatusBadge label={t(vendorOrderStatusKey(order.status))} tone={meta.tone} icon={meta.icon} />
           </View>
-        )}
-
-        {order?.status === 'PROPOSAL_SENT' && !customerDecisionCountdown.isExpired && customerDecisionCountdown.remainingSeconds > 0 && (
-          <View style={[
-            styles.countdownBanner,
-            customerDecisionCountdown.isWarning && { backgroundColor: '#fee2e2', borderColor: '#fca5a5' },
-          ]}>
-            <Clock size={18} color={customerDecisionCountdown.isWarning ? '#dc2626' : '#b45309'} />
-            <View>
-              <Text style={[styles.countdownTitle, customerDecisionCountdown.isWarning && { color: '#991b1b' }]}>
-                {t('orders.customer_decision_deadline', 'Customer deciding')}
-              </Text>
-              <Text style={[styles.countdownTimer, customerDecisionCountdown.isWarning && { color: '#dc2626' }]}>
-                {customerDecisionCountdown.formattedTime}
-              </Text>
+          {canAccept ? <Countdown label={t('orders.confirm_deadline')} countdown={vendorConfirmationCountdown} /> : null}
+          {order.status === VendorOrderStatus.PROPOSAL_SENT ? (
+            <Countdown label={t('orders.customer_decision_deadline')} countdown={customerDecisionCountdown} />
+          ) : null}
+          {hint ? (
+            <View style={styles.hintRow}>
+              <Info size={16} color={palette.info} />
+              <Text variant="caption" color={palette.textSecondary} style={styles.flex}>{hint}</Text>
             </View>
-          </View>
-        )}
+          ) : null}
+        </Card>
 
-        {order?.cancellationReason && (
-          <View style={styles.cancellationBanner}>
-            <XCircle size={18} color="#dc2626" />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.cancellationLabel}>
-                {t('orders.cancellation_reason')}
-              </Text>
-              <Text style={styles.cancellationText}>
-                {order.cancellationReason}
-              </Text>
+        {order.cancellationReason ? (
+          <View style={styles.cancelBanner} accessibilityRole="alert">
+            <XCircle size={20} color={palette.error} />
+            <View style={styles.flex}>
+              <Text variant="label" color={palette.error}>{t('orders.cancellation_reason')}</Text>
+              <Text variant="body" color={palette.text}>{order.cancellationReason}</Text>
             </View>
-          </View>
-        )}
-
-        <Text style={styles.sectionTitle}>{t('orders.order_items')}</Text>
-        {order?.items.map((item: any) => (
-          <OrderItem key={item.id} t={t} item={item} />
-        ))}
-
-        {order && (
-          <View style={styles.priceSummaryCard}>
-            <View style={styles.priceRow}>
-              <Text style={styles.priceTotalLabel}>
-                {t('orders.total_price')}
-              </Text>
-              <Text style={styles.priceTotalValue}>
-                {(order.totalAmount ?? 0).toFixed(2)} {t('common.currency')}
-              </Text>
-            </View>
-          </View>
-        )}
-      </ScrollView>
-
-      <View style={styles.footerActions}>
-        {canAccept ? (
-          <View style={styles.footerButtonsRow}>
-            <TouchableOpacity
-              style={[
-                styles.actionButton,
-                { backgroundColor: theme.colors.error, flex: 1 },
-              ]}
-              onPress={() =>
-                updateStatus({ status: VendorOrderStatus.CANCELLED })
-              }
-              disabled={isProcessing}
-            >
-              <Trash2 color={theme.colors.white} size={18} />
-              <Text style={styles.buttonTextSmall}>{t('common.cancel')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.actionButton,
-                { backgroundColor: theme.colors.primary, flex: 2 },
-              ]}
-              onPress={() => acceptOrder()}
-              disabled={isProcessing}
-            >
-              <Check color={theme.colors.white} size={20} />
-              <Text style={styles.buttonTextSmall}>
-                {t('orders.accept_order')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        ) : isPreparing ? (
-          <View style={styles.footerButtonsRow}>
-            <TouchableOpacity
-              style={[
-                styles.actionButton,
-                { backgroundColor: theme.colors.warning, flex: 1 },
-              ]}
-              onPress={() => setIsProposalModalVisible(true)}
-              disabled={isProcessing}
-            >
-              <AlertCircle color={theme.colors.white} size={18} />
-              <Text style={styles.buttonTextSmall}>
-                {t('orders.propose_changes')}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.actionButton,
-                { backgroundColor: theme.colors.success, flex: 1 },
-              ]}
-              onPress={() =>
-                updateStatus({ status: VendorOrderStatus.CONFIRMED })
-              }
-              disabled={isProcessing}
-            >
-              <Check color={theme.colors.white} size={18} />
-              <Text style={styles.buttonTextSmall}>{t('common.confirm')}</Text>
-            </TouchableOpacity>
           </View>
         ) : null}
-      </View>
 
-      <ProposalModal
+        <SectionHeader
+          title={t('orders.order_items')}
+          trailing={<Text variant="caption" color={palette.textMuted}>{t('orders.items_count', { count: order.items.length })}</Text>}
+          style={styles.sectionGap}
+        />
+        <Card padded={false}>
+          {order.items.map((item: any, i: number) => (
+            <ItemRow
+              key={item.id}
+              item={item}
+              proposal={proposalsByItem.get(item.id)}
+              t={t}
+              money={money}
+              weight={weight}
+              isLast={i === order.items.length - 1}
+            />
+          ))}
+        </Card>
+
+        <Card>
+          <SummaryRow label={t('orders.total_price')} value={money(order.totalAmount)} emphasis="total" />
+        </Card>
+      </ScrollView>
+
+      {canAccept || isPreparing ? (
+        <SafeAreaView edges={['bottom']} style={styles.footer}>
+          {canAccept ? (
+            <>
+              <Button label={t('orders.cancel_order')} variant="dangerOutline" onPress={confirmCancel} disabled={isProcessing} style={styles.flex} />
+              <Button label={t('orders.accept_order')} icon={Check} onPress={() => acceptOrder()} loading={isProcessing} style={styles.flex2} />
+            </>
+          ) : (
+            <>
+              <Button
+                label={t('orders.propose_changes')}
+                icon={FilePen}
+                variant="outline"
+                onPress={() => setIsProposalModalVisible(true)}
+                disabled={isProcessing}
+                style={styles.flex}
+              />
+              <Button
+                label={t('orders.confirm_prepared')}
+                icon={Check}
+                onPress={() => updateStatus({ status: VendorOrderStatus.CONFIRMED })}
+                loading={isProcessing}
+                style={styles.flex}
+              />
+            </>
+          )}
+        </SafeAreaView>
+      ) : null}
+
+      <ProposalSheet
         visible={isProposalModalVisible}
         onClose={() => setIsProposalModalVisible(false)}
         t={t}
@@ -428,255 +381,110 @@ const OrderDetailsScreen = ({ route }: any) => {
         handleUpdateProposal={handleUpdateProposal}
         onSubmit={submitProposals}
         isProcessing={isProcessing}
+        weight={weight}
+        kg={kg}
       />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.background },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  scrollContent: { padding: theme.spacing.lg },
-  statusCard: {
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.lg,
-    borderRadius: theme.radius.xl,
+  container: { flex: 1, backgroundColor: palette.background },
+  scrollContent: { padding: space.lg, gap: space.md, paddingBottom: space.huge },
+  flex: { flex: 1 },
+  flex2: { flex: 2 },
+  tabular: { fontVariant: ['tabular-nums'] },
+  pushEnd: { marginStart: 'auto' },
+  strike: { textDecorationLine: 'line-through' },
+  sectionGap: { marginTop: space.sm, marginBottom: 0 },
+  statusCard: { gap: space.md },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  hintRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
+  countdown: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
-    ...theme.shadows.card,
+    gap: space.sm,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
+    borderRadius: radii.md,
   },
-  statusLabel: {
-    fontSize: 16,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.secondary,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.secondary,
-    marginBottom: 15,
-  },
-  itemCard: {
-    backgroundColor: theme.colors.surface,
-    padding: 16,
-    borderRadius: theme.radius.lg,
-    marginBottom: 12,
-    ...theme.shadows.card,
-  },
-  itemHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  itemName: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: theme.colors.text,
-    flex: 1,
-  },
-  itemPrice: { fontSize: 15, fontWeight: '700', color: theme.colors.primary },
-  itemActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  quantityContainer: { flexDirection: 'row', alignItems: 'center' },
-  qtyLabel: { fontSize: 13, color: theme.colors.textMuted, marginEnd: 6 },
-  qtyValue: { fontSize: 14, fontWeight: '700', color: theme.colors.text },
-  actualWeightLabel: {
-    fontSize: 12,
-    color: theme.colors.textMuted,
-    fontStyle: 'italic',
-  },
-  badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: theme.radius.full,
-  },
-  badgeText: { fontSize: 12, fontWeight: '700', color: theme.colors.primary },
-  cancellationBanner: {
+  cancelBanner: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#fef2f2',
-    borderRadius: theme.radius.lg,
-    padding: 14,
-    marginBottom: 16,
-    gap: 12,
+    gap: space.md,
+    padding: space.lg,
+    borderRadius: radii.lg,
+    backgroundColor: palette.errorSoft,
+  },
+  itemRow: { paddingHorizontal: space.lg, paddingVertical: space.md, gap: space.xs },
+  itemDivider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: palette.border },
+  itemMain: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md },
+  itemMeta: { flexDirection: 'row', flexWrap: 'wrap', columnGap: space.md },
+  proposalLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: space.sm,
+    marginTop: space.xs,
+    padding: space.sm,
+    borderRadius: radii.sm,
+    backgroundColor: palette.surfaceMuted,
+  },
+  footer: {
+    flexDirection: 'row',
+    gap: space.sm,
+    paddingHorizontal: space.lg,
+    paddingTop: space.md,
+    paddingBottom: space.md,
+    backgroundColor: palette.surface,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: palette.border,
+  },
+  overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: palette.overlay },
+  sheet: {
+    maxHeight: '90%',
+    backgroundColor: palette.surface,
+    borderTopLeftRadius: radii.xl,
+    borderTopRightRadius: radii.xl,
+    paddingHorizontal: space.lg,
+    paddingTop: space.lg,
+    paddingBottom: space.md,
+  },
+  sheetHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: space.md, marginBottom: space.md },
+  sheetBody: { flexGrow: 0 },
+  sheetBodyContent: { gap: space.sm, paddingBottom: space.lg },
+  proposalItem: {
+    gap: space.sm,
+    padding: space.md,
+    borderRadius: radii.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: palette.borderStrong,
+  },
+  proposalItemOff: { backgroundColor: palette.errorSoft, borderColor: palette.error },
+  toggleRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  inputRow: { flexDirection: 'row', alignItems: 'center', gap: space.md },
+  stepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: radii.pill,
     borderWidth: 1,
-    borderColor: '#fecaca',
+    borderColor: palette.border,
+    backgroundColor: palette.surface,
   },
-  cancellationLabel: {
-    fontSize: 12,
-    color: '#991b1b',
-    fontWeight: theme.typography.weights.semibold,
-    marginBottom: 2,
-  },
-  cancellationText: {
-    fontSize: 14,
-    color: '#dc2626',
-  },
-  countdownBanner: {
+  stepValue: { minWidth: 32, textAlign: 'center' },
+  weightBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fef3c7',
-    borderRadius: theme.radius.lg,
-    padding: 14,
-    marginBottom: 16,
-    gap: 12,
+    gap: space.xs,
+    minWidth: 110,
+    height: sizes.touch,
+    paddingHorizontal: space.md,
+    borderRadius: radii.sm,
     borderWidth: 1,
-    borderColor: '#fcd34d',
+    borderColor: palette.borderStrong,
+    backgroundColor: palette.surface,
   },
-  countdownTitle: {
-    fontSize: 12,
-    color: '#92400e',
-    fontWeight: theme.typography.weights.semibold,
-    marginBottom: 2,
-  },
-  countdownTimer: {
-    fontSize: 22,
-    fontWeight: theme.typography.weights.bold,
-    color: '#b45309',
-    fontVariant: ['tabular-nums'],
-  },
-  priceSummaryCard: {
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.lg,
-    borderRadius: theme.radius.xl,
-    marginTop: 8,
-    ...theme.shadows.card,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  priceTotalLabel: {
-    fontSize: 16,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.secondary,
-  },
-  priceTotalValue: {
-    fontSize: 16,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.success,
-  },
-  footerActions: {
-    padding: theme.spacing.md,
-    backgroundColor: theme.colors.white,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-  },
-  footerButtonsRow: { flexDirection: 'row', gap: 10 },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: theme.radius.md,
-    gap: 6,
-  },
-  buttonTextSmall: {
-    color: theme.colors.white,
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  modalContent: {
-    backgroundColor: theme.colors.white,
-    borderRadius: theme.radius.lg,
-    maxHeight: '85%',
-    padding: 20,
-    ...theme.shadows.medium,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  modalTitle: { fontSize: 18, fontWeight: 'bold', color: theme.colors.text },
-  modalBody: { marginBottom: 20 },
-  proposalItemRow: {
-    marginBottom: 20,
-    paddingBottom: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  proposalItemHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  proposalItemName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: theme.colors.text,
-    flex: 1,
-    marginEnd: 10,
-  },
-  unavailableToggle: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  unavailableText: { fontSize: 11, color: theme.colors.textMuted },
-  proposalInputArea: {
-    backgroundColor: theme.colors.background,
-    padding: 10,
-    borderRadius: theme.radius.sm,
-  },
-  qtyProposalContainer: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  weightProposalContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  inputLabel: { fontSize: 13, color: theme.colors.textMuted, minWidth: 80 },
-  qtyControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.white,
-    borderRadius: theme.radius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    padding: 4,
-  },
-  qtyBtn: { padding: 4 },
-  originalHint: { fontSize: 12, color: theme.colors.textMuted },
-  weightInputBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.white,
-    borderRadius: theme.radius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    paddingHorizontal: 10,
-    flex: 1,
-  },
-  weightInput: {
-    flex: 1,
-    paddingVertical: 8,
-    fontSize: 15,
-    color: theme.colors.text,
-  },
-  weightUnit: { fontSize: 14, color: theme.colors.textMuted, marginStart: 4 },
-  modalSubmitBtn: {
-    backgroundColor: theme.colors.primary,
-    paddingVertical: 14,
-    borderRadius: theme.radius.md,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center',
-  },
-  modalSubmitText: {
-    color: theme.colors.white,
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
+  weightInput: { flex: 1, fontSize: 16, color: palette.text, paddingVertical: 0, textAlign: 'center' },
 });
 
 export default OrderDetailsScreen;

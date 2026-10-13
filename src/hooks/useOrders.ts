@@ -42,6 +42,7 @@ export const useOrders = () => {
   return {
     orders: query.data?.pages.flatMap(p => p.items ?? []) ?? [],
     isLoading: query.isLoading,
+    error: query.error,
     refetch: query.refetch,
     isRefetching: query.isRefetching,
     fetchNextPage: query.fetchNextPage,

@@ -12,8 +12,6 @@ export const useEarnings = () => {
     enabled: !!vendorId,
   });
 
-  //   console.log(pendingQuery);
-
   const historyQuery = useQuery({
     queryKey: ['vendorSettlements', vendorId],
     queryFn: () => OrderService.getSettlements(vendorId!),
@@ -24,6 +22,7 @@ export const useEarnings = () => {
     pendingData: pendingQuery.data,
     settlements: historyQuery.data || [],
     isLoading: pendingQuery.isLoading || historyQuery.isLoading,
+    error: pendingQuery.error ?? historyQuery.error,
     isRefetching: pendingQuery.isRefetching || historyQuery.isRefetching,
     refetch: async () => {
       await Promise.all([pendingQuery.refetch(), historyQuery.refetch()]);
