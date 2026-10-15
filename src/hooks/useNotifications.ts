@@ -120,6 +120,15 @@ export const useNotifications = (appType: AppType) => {
           params: { orderId },
         });
       }
+    } else if (type === 'PRODUCT_SUBMISSION') {
+      // Admin decision on a new-product proposal
+      const { submissionId } = (remoteMessage.data || {}) as any;
+      if (navigationRef.isReady() && submissionId) {
+        (navigationRef.navigate as any)('ProductsTab', {
+          screen: 'ProductSubmissionDetail',
+          params: { id: submissionId },
+        });
+      }
     } else if (type === 'NEW_REVIEW') {
       if (navigationRef.isReady()) {
         (navigationRef.navigate as any)('ProfileTab', {

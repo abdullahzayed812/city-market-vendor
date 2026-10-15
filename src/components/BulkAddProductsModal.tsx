@@ -38,6 +38,8 @@ interface BulkAddProductsModalProps {
   onCategoryFilterChange: (categoryId: string) => void;
   onImportCategory: (categoryId: string) => Promise<{ added: number; skipped: number } | undefined>;
   isImportingCategory?: boolean;
+  // "Not in the catalog? Propose it" (opens the new-product proposal)
+  onProposeNew?: () => void;
 }
 
 const BulkAddProductsModal: React.FC<BulkAddProductsModalProps> = ({
@@ -53,6 +55,7 @@ const BulkAddProductsModal: React.FC<BulkAddProductsModalProps> = ({
   globalCategoryFilter = '',
   onCategoryFilterChange,
   onImportCategory,
+  onProposeNew,
   isImportingCategory,
 }) => {
   const { t } = useTranslation();
@@ -272,6 +275,13 @@ const BulkAddProductsModal: React.FC<BulkAddProductsModalProps> = ({
             ListEmptyComponent={
               <View style={styles.emptyPickerContainer}>
                 <Text style={styles.emptyText}>{t('common.no_results')}</Text>
+                {onProposeNew ? (
+                  <TouchableOpacity onPress={onProposeNew} accessibilityRole="button">
+                    <Text style={[styles.emptyText, { color: theme.colors.primary, fontWeight: '600' }]}>
+                      {t('product_submissions.cant_find_propose')}
+                    </Text>
+                  </TouchableOpacity>
+                ) : null}
               </View>
             }
             ListFooterComponent={

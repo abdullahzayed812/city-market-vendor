@@ -16,6 +16,9 @@ import ProductsScreen from '../screens/ProductsScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import ReviewsScreen from '../screens/ReviewsScreen';
 import EarningsScreen from '../screens/EarningsScreen';
+import ProductSubmissionsScreen from '../screens/ProductSubmissionsScreen';
+import ProductSubmissionFormScreen from '../screens/ProductSubmissionFormScreen';
+import ProductSubmissionDetailScreen from '../screens/ProductSubmissionDetailScreen';
 import { palette } from '@city-market/mobile-ui';
 import { VendorOrderStatus } from '@city-market/shared';
 import { useOrders } from '../hooks/useOrders';
@@ -27,6 +30,16 @@ const OrdersStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="OrdersList" component={OrdersScreen} />
     <Stack.Screen name="OrderDetails" component={OrderDetailsScreen} />
+  </Stack.Navigator>
+);
+
+// Store products, plus proposals for products the catalog doesn't have yet
+const ProductsStack = () => (
+  <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Screen name="ProductsList" component={ProductsScreen} />
+    <Stack.Screen name="ProductSubmissions" component={ProductSubmissionsScreen} />
+    <Stack.Screen name="ProductSubmissionForm" component={ProductSubmissionFormScreen} />
+    <Stack.Screen name="ProductSubmissionDetail" component={ProductSubmissionDetailScreen} />
   </Stack.Navigator>
 );
 
@@ -77,7 +90,7 @@ const MainTabNavigator = () => {
       />
       <Tab.Screen
         name="ProductsTab"
-        component={ProductsScreen}
+        component={ProductsStack}
         options={{
           title: t('products.title'),
           tabBarIcon: ({ color, size }) => (

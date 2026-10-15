@@ -28,7 +28,7 @@ import {
   type Tone,
 } from '@city-market/mobile-ui';
 import type { TFunction } from 'i18next';
-import { Package, X, Plus, Tag, Boxes, CircleAlert, CircleCheck, CircleX, type LucideIcon } from 'lucide-react-native';
+import { Package, X, Plus, Tag, Boxes, CircleAlert, CircleCheck, CircleX, ClipboardList, type LucideIcon } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomHeader from '../components/common/CustomHeader';
 import QueryError from '../components/common/QueryError';
@@ -37,6 +37,7 @@ import { MeasurementType, VendorProduct, WeightUnit } from '@city-market/shared'
 import { useProductsLogic } from '../hooks/useProductsLogic';
 import { useFormat } from '../hooks/useFormat';
 import BulkAddProductsModal from '../components/BulkAddProductsModal';
+import { ProductService } from '../services/api/productService';
 
 const LOW_STOCK_THRESHOLD_UNITS = 10;
 const LOW_STOCK_THRESHOLD_GRAMS = 1000;
@@ -227,7 +228,7 @@ const ProductRow = React.memo(({ item, onEdit, t, money }: RowProps) => {
 
 /* ------------------------------------------------------------------ */
 
-const ProductsScreen = () => {
+const ProductsScreen = ({ navigation, route }: any) => {
   const {
     t,
     categories,
@@ -276,8 +277,27 @@ const ProductsScreen = () => {
     [updatePrice, closeEdit],
   );
 
+  // Opened with { editProductId } (e.g. from an approved proposal): set that product's price
+  const editProductId: string | undefined = route?.params?.editProductId;
+  useEffect(() => {
+    if (!editProductId) return;
+    navigation.setParams({ editProductId: undefined });
+    ProductService.getVendorProduct(editProductId)
+      .then(product => product && setEditing({ product, mode: 'price' }))
+      .catch(() => {});
+  }, [editProductId, navigation]);
+
   const addButton = (
-    <IconButton icon={Plus} variant="primary" onPress={openBulkAddModal} accessibilityLabel={t('products.bulk_add_title')} size={40} />
+    <View style={styles.headerActions}>
+      <IconButton
+        icon={ClipboardList}
+        variant="soft"
+        onPress={() => navigation.navigate('ProductSubmissions')}
+        accessibilityLabel={t('product_submissions.title')}
+        size={40}
+      />
+      <IconButton icon={Plus} variant="primary" onPress={openBulkAddModal} accessibilityLabel={t('products.bulk_add_title')} size={40} />
+    </View>
   );
 
   let body: React.ReactNode;
@@ -351,6 +371,10 @@ const ProductsScreen = () => {
         onCategoryFilterChange={setGlobalCategoryFilter}
         onImportCategory={bulkAddProductsFromCategory}
         isImportingCategory={isBulkAddingFromCategory}
+        onProposeNew={() => {
+          setBulkAddModalVisible(false);
+          navigation.navigate('ProductSubmissionForm');
+        }}
       />
     </SafeAreaView>
   );
@@ -359,6 +383,7 @@ const ProductsScreen = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: palette.background },
   flex: { flex: 1 },
+  headerActions: { flexDirection: 'row', gap: space.sm },
   tabular: { fontVariant: ['tabular-nums'] },
   filtersBar: {
     backgroundColor: palette.surface,

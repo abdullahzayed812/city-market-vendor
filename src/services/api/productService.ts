@@ -10,6 +10,10 @@ export const ProductService = {
     );
     return response.data?.data;
   },
+  getVendorProduct: async (id: string) => {
+    const response = await apiClient.get<ApiResponse<VendorProduct>>(`/catalog/products/${id}`);
+    return response.data?.data;
+  },
   getCategories: async () => {
     const response = await apiClient.get<ApiResponse<Category[]>>(
       '/catalog/categories',
